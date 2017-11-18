@@ -1,0 +1,68 @@
+{
+  "name": "intervals-fn",
+  "version": "0.0.0-development",
+  "description": "Manipulate intervals in a functional way",
+  "main": "dist/index.bundle.js",
+  "types": "dist/lib.d.ts",
+  "scripts": {
+    "ava": "ava build/*.test.js",
+    "test": "tslint -p ./ && tsc && nyc npm run ava",
+    "build": "webpack && npm run doc",
+    "doc": "typedoc --out docs/ dist/",
+    "prepublish": "npm run build",
+    "semantic-release":
+      "semantic-release pre && npm publish && semantic-release post",
+    "watch:ts": "tsc -w",
+    "watch:ava": "ava -w build/*.test.js",
+    "watch:test":
+      "concurrently -k -p \"[{name}]\" -n \"TypeScript,Ava\" -c \"blue.bold,magenta.bold\" \"npm run watch:ts\" \"npm run watch:ava\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/js-republic/intervals-fn"
+  },
+  "private": false,
+  "publishConfig": {
+    "tag": "dev",
+    "access": "public"
+  },
+  "keywords": [
+    "interval",
+    "range",
+    "intersection",
+    "union",
+    "subtraction",
+    "typescript"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/js-republic/intervals-fn/issues"
+  },
+  "homepage": "https://github.com/js-republic/intervals-fn#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "@semantic-release/release-notes-generator": "^5.0.1",
+    "@types/moment-range": "^3.0.4",
+    "@types/ramda": "github:types/npm-ramda#dist",
+    "ava": "^0.23.0",
+    "concurrently": "^3.5.0",
+    "cz-conventional-changelog": "^2.1.0",
+    "moment": "^2.19.2",
+    "moment-range": "^3.0.3",
+    "nyc": "^11.3.0",
+    "prettier": "^1.8.2",
+    "ramda": "^0.25.0",
+    "semantic-release": "^8.2.0",
+    "ts-loader": "^3.1.1",
+    "tslint": "^5.8.0",
+    "tslint-config-prettier": "^1.6.0",
+    "typedoc": "^0.9.0",
+    "typescript": "^2.6.1",
+    "webpack": "^3.8.1"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
+}

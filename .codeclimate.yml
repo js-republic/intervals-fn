@@ -1,0 +1,4 @@
+checks:
+  file-lines:
+    config:
+      threshold: 350

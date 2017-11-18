@@ -1,0 +1,11 @@
+lib
+tsconfig.json
+tslint.json
+typedoc.js
+.travis.yml
+.prettierrc
+docs
+coverage
+.nyc_output
+build
+dist/build
