@@ -6,7 +6,7 @@
   "types": "dist/lib.d.ts",
   "scripts": {
     "ava": "ava build/*.test.js",
-    "test": "tslint -p ./ && tsc && nyc npm run ava",
+    "test": "tslint -p ./ && tsc && nyc --reporter=lcov npm run ava",
     "build": "webpack && npm run doc",
     "doc": "typedoc --out docs/ dist/",
     "prepublish": "npm run build",
