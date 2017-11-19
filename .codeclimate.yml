@@ -1,3 +1,15 @@
+engines:
+  tslint:
+    enabled: true
+    channel: beta
+ratings:
+  paths:
+  - 'lib/**/*'
+  - '**.ts'
+exclude_paths:
+- dist
+- node_modules
+- coverage
 checks:
   file-lines:
     config:
