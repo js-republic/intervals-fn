@@ -4,10 +4,10 @@ plugins:
     enabled: false
     channel: beta
 exclude_patterns:
-- '**.test.ts'
-- 'dist'
-- 'node_modules'
-- 'coverage'
+- '**/*.test.ts'
+- 'dist/'
+- 'node_modules/'
+- 'coverage/'
 checks:
   file-lines:
     config:
