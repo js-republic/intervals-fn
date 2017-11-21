@@ -10,6 +10,8 @@ exclude_paths:
 - dist
 - node_modules
 - coverage
+exclude_patterns:
+- '**.test.ts'
 checks:
   file-lines:
     config:
