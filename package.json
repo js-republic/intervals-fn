@@ -8,8 +8,8 @@
     "ava": "ava build/*.test.js",
     "test": "tslint -p ./ && tsc && nyc --reporter=lcov npm run ava",
     "test:codecov": "tslint -p ./ && tsc && nyc npm run ava",
-    "build": "webpack && npm run doc",
-    "doc": "typedoc --out docs/ dist/",
+    "build": "webpack",
+    "doc": "npm run build && typedoc --out docs/ dist/",
     "prepublish": "npm run build",
     "semantic-release":
       "semantic-release pre && npm publish && semantic-release post",
