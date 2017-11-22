@@ -1,4 +1,5 @@
 import {
+  any,
   aperture,
   applySpec,
   concat,
@@ -93,10 +94,9 @@ export function complement<T extends interval>(boundaries: interval, intervals: 
   return complementGen(boundariesSE, intervalSE).map(convertTo<T>(typeStr));
 }
 
-const setupForTwoIntervals = <T extends interval>(
+const setupForTwoIntervals = <T extends interval>(fn: (i1: IntervalSE[], i2: IntervalSE[]) => IntervalSE[]) => (
   interval1: T | T[],
-  interval2: T | T[],
-  fn: (i1: IntervalSE[], i2: IntervalSE[]) => IntervalSE[]
+  interval2: T | T[]
 ): T[] => {
   const typeStr = getType(interval1);
   const r1s = prepareInput(typeStr, interval1);
@@ -126,14 +126,18 @@ const unifyGen = pipe(
   )
 ) as (a: IntervalSE[], b: IntervalSE[]) => IntervalSE[];
 
-export function unify<T extends interval>(interval1: T | T[], interval2: T | T[]): T[] {
-  return setupForTwoIntervals<T>(interval1, interval2, unifyGen);
+export const unify = setupForTwoIntervals(unifyGen);
+
+const intersectUnfolderSeed = (i1: IntervalSE[], i2: IntervalSE[]): [IntervalSE[], IntervalSE[]] => {
+  const new1 = i1[0].end > i2[0].end ? i1 : drop(1, i1);
+  const new2 = i2[0].end > i1[0].end ? i2 : drop(1, i2);
+  return [new1, new2];
 }
 
 const intersectUnfolder = (
   [inters1, inters2]: [IntervalSE[], IntervalSE[]]
 ): false | [IntervalSE | null, [IntervalSE[], IntervalSE[]]] => {
-  if (isEmpty(inters1) || isEmpty(inters2)) { return false; }
+  if (any(isEmpty)([inters1, inters2])) { return false; }
   const newInters1 = dropWhile(i => i.end <= inters2[0].start, inters1);
   if (isEmpty(newInters1)) {
     return false;
@@ -144,13 +148,11 @@ const intersectUnfolder = (
     return false;
   }
   const inter2 = newInters2[0];
-  const intersec = { end: Math.min(inter1.end, inter2.end), start: Math.max(inter1.start, inter2.start) };
-  const seed: [IntervalSE[], IntervalSE[]] = inter1.end > inter2.end ? [newInters1, drop(1, newInters2)] : inter1.end === inter2.end ? [drop(1, newInters1), drop(1, newInters2)] : [drop(1, newInters1), newInters2];
-  if (intersec.end <= intersec.start) {
-    return [null, seed];
-  }
+  const minMaxInter = { end: Math.min(inter1.end, inter2.end), start: Math.max(inter1.start, inter2.start) };
+  const resultInter = minMaxInter.end <= minMaxInter.start ? null : minMaxInter;
+  const seed = intersectUnfolderSeed(newInters1, newInters2);
   return [
-    intersec,
+    resultInter,
     seed,
   ];
 };
@@ -168,6 +170,4 @@ const intersectGen = (intervalsA: IntervalSE[], intervalsB: IntervalSE[]): Inter
  * Intersections of `interval1` and `interval2`.
  * @returns An array of intervals or an interval if alone.
  */
-export function intersect<T extends interval>(interval1: T | T[], interval2: T | T[]): T[] {
-  return setupForTwoIntervals<T>(interval1, interval2, intersectGen);
-}
+export const intersect = setupForTwoIntervals(intersectGen);

@@ -113,7 +113,7 @@ test('will intersect an interval and an array', t => {
   const r1 = { start: 0, end: 5 };
   const r2 = [{ start: 1, end: 2 }, { start: 5, end: 10 }];
   const testOutputFn = (res: IntervalSE[]): void => {
-    t.true(res.length === 0);
+    t.true(res.length === 1);
     t.true(res[0].start === 1 && res[0].end === 2);
   };
   testFn(r1, r2, intersect, testOutputFn, t);
