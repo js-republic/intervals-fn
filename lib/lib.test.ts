@@ -24,7 +24,7 @@ const testFn = (
   testOutputFn: (n: any) => void,
   t: any
 ): void => {
-  const res = fn(i1, i2);
+  const res = fn(i1)(i2);
   const res2 = prepareOutput(
     fn(prepareInput(i1, convertSEtoFT), prepareInput(i2, convertSEtoFT)),
     convertFTtoSE
@@ -34,7 +34,7 @@ const testFn = (
   t.throws(fn.bind(null, [{ test: 1 }], { test: 1 }), 'Unrecognized interval format');
 };
 
-test('will return intervals complement', t => {
+test('will return complement', t => {
   const intervals = [{ start: 1, end: 2 }, { start: 5, end: 7 }, { start: 6, end: 8 }];
   const boundaries = { start: 0, end: 10 };
   const testOutputFn = (res: IntervalSE[]): void => {
@@ -83,9 +83,15 @@ test('will intersect two arrays', t => {
     t.true(res[2].start === 20 && res[2].end === 21);
   };
   testFn(r1, r2, intersect, testOutputFn, t);
-  testFn([{ start: 0, end: 5 }, { start: 10, end: 15 }], [{ start: 7, end: 9 }], intersect, (res: IntervalSE[]) => {
-    t.true(res.length === 0);
-  }, t)
+  testFn(
+    [{ start: 0, end: 5 }, { start: 10, end: 15 }],
+    [{ start: 7, end: 9 }],
+    intersect,
+    (res: IntervalSE[]) => {
+      t.true(res.length === 0);
+    },
+    t
+  );
 });
 
 test('will intersect correctly if one interval from arg1 intersects many from arg2', t => {

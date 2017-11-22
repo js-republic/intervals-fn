@@ -4,6 +4,8 @@ import {
   applySpec,
   concat,
   converge,
+  CurriedFunction2,
+  curry,
   drop,
   dropWhile,
   either,
@@ -82,22 +84,29 @@ const complementGen = (boundaries: IntervalSE, intervals: IntervalSE[]): Interva
 /**
  * Complement of `intervals` bounded to `boundaries`. Convert space between two consecutive intervals into interval.
  *
- * input 1 | input 2 | result
+ * Curried function. Accept array of intervals. Doesn't mutate input. Output keeps input's structure.
+ *
+ * boundaries | interval(s) | result
  * --- | --- | ---
  * { start: 0, end: 10} | { start: 3, end: 7 } | [{ start: 0, end: 3 }, { start: 7, end: 10 }]
  * { start: 0, end: 10} | [{ start: 2, end: 4 }, { start: 7, end: 8 }] | [{ start: 0, end: 2 }, { start: 4, end: 7 }, { start: 8, end: 10 }]
+ *
+ * @param boundaries arg1: interval defining boundaries for the complement computation.
+ * @param intervals arg2: one interval or array of intervals that complement the result.
+ * @returns array of intervals.
  */
-export function complement<T extends interval>(boundaries: interval, intervals: T | T[]): T[] {
-  const typeStr = getType(intervals);
-  const intervalSE = prepareInput(typeStr, intervals);
-  const boundariesSE = convertFrom(getType(boundaries))(boundaries);
-  return complementGen(boundariesSE, intervalSE).map(convertTo<T>(typeStr));
-}
+export const complement: CurriedFunction2<interval, interval | interval[], interval[]> = curry(
+  <T extends interval>(boundaries: interval, intervals: T | T[]): T[] => {
+    const typeStr = getType(intervals);
+    const intervalSE = prepareInput(typeStr, intervals);
+    const boundariesSE = convertFrom(getType(boundaries))(boundaries);
+    return complementGen(boundariesSE, intervalSE).map(convertTo<T>(typeStr));
+  }
+);
 
-const setupForTwoIntervals = <T extends interval>(fn: (i1: IntervalSE[], i2: IntervalSE[]) => IntervalSE[]) => (
-  interval1: T | T[],
-  interval2: T | T[]
-): T[] => {
+const setupForTwoIntervals = <T extends interval>(
+  fn: (i1: IntervalSE[], i2: IntervalSE[]) => IntervalSE[]
+) => (interval1: T | T[], interval2: T | T[]): T[] => {
   const typeStr = getType(interval1);
   const r1s = prepareInput(typeStr, interval1);
   const r2s = prepareInput(typeStr, interval2);
@@ -126,18 +135,37 @@ const unifyGen = pipe(
   )
 ) as (a: IntervalSE[], b: IntervalSE[]) => IntervalSE[];
 
-export const unify = setupForTwoIntervals(unifyGen);
+/**
+ * Union of `intervals`.
+ *
+ * Curried function. Accept array of intervals. Doesn't mutate input. Output keeps input's structure.
+ *
+ * interval(s) A | interval(s) B | result
+ * --- | --- | ---
+ * { start: 0, end: 4} | { start: 3, end: 7 } | [{ start: 0, end: 7 }]
+ * { start: 0, end: 4} | [{ start: 3, end: 7 }, { start: 9, end: 11 }] | [{ start: 0, end: 7 }, { start: 9, end: 11 }]
+ *
+ * @param i1 arg1: one interval or array of intervals
+ * @param i2 arg2: one interval or array of intervals
+ * @returns union of `arg1` and `arg2`
+ */
+export const unify = curry(setupForTwoIntervals(unifyGen));
 
-const intersectUnfolderSeed = (i1: IntervalSE[], i2: IntervalSE[]): [IntervalSE[], IntervalSE[]] => {
+const intersectUnfolderSeed = (
+  i1: IntervalSE[],
+  i2: IntervalSE[]
+): [IntervalSE[], IntervalSE[]] => {
   const new1 = i1[0].end > i2[0].end ? i1 : drop(1, i1);
   const new2 = i2[0].end > i1[0].end ? i2 : drop(1, i2);
   return [new1, new2];
-}
+};
 
 const intersectUnfolder = (
   [inters1, inters2]: [IntervalSE[], IntervalSE[]]
 ): false | [IntervalSE | null, [IntervalSE[], IntervalSE[]]] => {
-  if (any(isEmpty)([inters1, inters2])) { return false; }
+  if (any(isEmpty)([inters1, inters2])) {
+    return false;
+  }
   const newInters1 = dropWhile(i => i.end <= inters2[0].start, inters1);
   if (isEmpty(newInters1)) {
     return false;
@@ -148,13 +176,13 @@ const intersectUnfolder = (
     return false;
   }
   const inter2 = newInters2[0];
-  const minMaxInter = { end: Math.min(inter1.end, inter2.end), start: Math.max(inter1.start, inter2.start) };
+  const minMaxInter = {
+    end: Math.min(inter1.end, inter2.end),
+    start: Math.max(inter1.start, inter2.start),
+  };
   const resultInter = minMaxInter.end <= minMaxInter.start ? null : minMaxInter;
   const seed = intersectUnfolderSeed(newInters1, newInters2);
-  return [
-    resultInter,
-    seed,
-  ];
+  return [resultInter, seed];
 };
 
 const intersectGen = (intervalsA: IntervalSE[], intervalsB: IntervalSE[]): IntervalSE[] => {
@@ -167,7 +195,17 @@ const intersectGen = (intervalsA: IntervalSE[], intervalsB: IntervalSE[]): Inter
 };
 
 /**
- * Intersections of `interval1` and `interval2`.
- * @returns An array of intervals or an interval if alone.
+ * Intersection of `intervals`.
+ *
+ * Curried function. Accept array of intervals. Doesn't mutate input. Output keeps input's structure.
+ *
+ * interval(s) A | interval(s) B | result
+ * --- | --- | ---
+ * { start: 0, end: 4 } | { start: 3, end: 7 } | [{ start: 3, end: 4 }]
+ * [{ start: 0, end: 4 }, { start: 8, end: 11 }] | [{ start: 2, end: 9 }, { start: 10, end: 13 }] | [{ start: 2, end: 4 }, { start: 8, end: 9 }, { start: 10, end: 11 }]
+ *
+ * @param i1 arg1: one interval or array of intervals
+ * @param i2 arg2: one interval or array of intervals
+ * @returns intersection of `arg1` and `arg2`
  */
-export const intersect = setupForTwoIntervals(intersectGen);
+export const intersect = curry(setupForTwoIntervals(intersectGen));
