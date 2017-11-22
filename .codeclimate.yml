@@ -1,13 +1,11 @@
-version: '2'
-engines:
+version: '2'  
+plugins:
   duplication:
     enabled: true
     config:
       languages:
         javascript:
           mass_threshold: 65
-      
-plugins:
   tslint:
     enabled: false
     channel: beta
