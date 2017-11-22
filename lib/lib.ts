@@ -1,4 +1,5 @@
 import {
+  aperture,
   applySpec,
   concat,
   converge,
@@ -8,11 +9,13 @@ import {
   groupWith,
   head,
   isEmpty,
+  isNil,
   last,
   map,
   nthArg,
   pipe,
   prop,
+  reject,
   sortBy,
   unfold,
 } from 'ramda';
@@ -59,6 +62,36 @@ const prepareInput = (typeStr: string, i: interval | interval[]): IntervalSE[] =
   }
   return [convertFrom(typeStr)(i)];
 };
+
+const complementGen = (boundaries: IntervalSE, intervals: IntervalSE[]): IntervalSE[] => {
+  const intervalsS = sortByStart(intervals);
+  const prepRanges: IntervalSE[] = [
+    { start: -Infinity, end: boundaries.start },
+    ...intervalsS,
+    { start: boundaries.end, end: Infinity },
+  ];
+  return reject<IntervalSE | null>(
+    isNil,
+    aperture(2, prepRanges).map(
+      ([r1, r2]) => (r1.end >= r2.start ? null : { start: r1.end, end: r2.start })
+    )
+  ) as IntervalSE[];
+};
+
+/**
+ * Complement of `intervals` bounded to `boundaries`. Convert space between two consecutive intervals into interval.
+ *
+ * input 1 | input 2 | result
+ * --- | --- | ---
+ * { start: 0, end: 10} | { start: 3, end: 7 } | [{ start: 0, end: 3 }, { start: 7, end: 10 }]
+ * { start: 0, end: 10} | [{ start: 2, end: 4 }, { start: 7, end: 8 }] | [{ start: 0, end: 2 }, { start: 4, end: 7 }, { start: 8, end: 10 }]
+ */
+export function complement<T extends interval>(boundaries: interval, intervals: T | T[]): T[] {
+  const typeStr = getType(intervals);
+  const intervalSE = prepareInput(typeStr, intervals);
+  const boundariesSE = convertFrom(getType(boundaries))(boundaries);
+  return complementGen(boundariesSE, intervalSE).map(convertTo<T>(typeStr));
+}
 
 const setupForTwoIntervals = <T extends interval>(
   interval1: T | T[],
