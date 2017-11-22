@@ -1,7 +1,17 @@
 import {
+  applySpec,
+  concat,
+  converge,
   drop,
   dropWhile,
+  either,
+  groupWith,
+  head,
   isEmpty,
+  last,
+  map,
+  nthArg,
+  pipe,
   prop,
   sortBy,
   unfold,
@@ -60,6 +70,32 @@ const setupForTwoIntervals = <T extends interval>(
   const r2s = prepareInput(typeStr, interval2);
   return fn(r1s, r2s).map(convertTo<T>(typeStr));
 };
+
+const isOverlappingGen = (a: IntervalSE, b: IntervalSE): boolean => {
+  return b.start < a.end && b.end > a.start;
+};
+
+const isAdjacentGen = (a: IntervalSE, b: IntervalSE): boolean => {
+  return a.start === b.end || a.end === b.start;
+};
+
+const propFromNthArg = (n: number, propName: string) => pipe(nthArg(n), prop(propName));
+
+const unifyGen = pipe(
+  concat as (a: IntervalSE[], b: IntervalSE[]) => IntervalSE[],
+  sortByStart,
+  groupWith(either(isOverlappingGen, isAdjacentGen)),
+  map(
+    converge(
+      applySpec<IntervalSE>({ start: propFromNthArg(0, 'start'), end: propFromNthArg(1, 'end') }),
+      [head, last]
+    )
+  )
+) as (a: IntervalSE[], b: IntervalSE[]) => IntervalSE[];
+
+export function unify<T extends interval>(interval1: T | T[], interval2: T | T[]): T[] {
+  return setupForTwoIntervals<T>(interval1, interval2, unifyGen);
+}
 
 const intersectUnfolder = (
   [inters1, inters2]: [IntervalSE[], IntervalSE[]]

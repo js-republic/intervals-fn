@@ -1,7 +1,7 @@
 import test from 'ava';
 
 import { IntervalFT, IntervalSE } from './data.structures';
-import { intersect } from './lib';
+import { intersect, unify } from './lib';
 
 const prepareInput = (i1: IntervalSE | IntervalSE[], convertFn: (i: IntervalSE) => any) => {
   if (Array.isArray(i1)) {
@@ -36,6 +36,17 @@ const testFn = (
   testOutputFn(res2);
   t.throws(fn.bind(null, [{ test: 1 }], { test: 1 }), 'Unrecognized interval format');
 };
+
+test('will unify two arrays', t => {
+  const i1 = [{ start: 1, end: 2 }, { start: 7, end: 9 }];
+  const i2 = [{ start: 4, end: 8 }];
+  const testOutputFn = (res: IntervalSE[]): void => {
+    t.true(res.length === 2);
+    t.true(res[0].start === 1 && res[0].end === 2);
+    t.true(res[1].start === 4 && res[1].end === 9);
+  };
+  testFn(i1, i2, unify, testOutputFn, t);
+});
 
 test('will intersect an array with an interval', t => {
   const r1 = [{ start: 0, end: 5 }, { start: 7, end: 9 }];
