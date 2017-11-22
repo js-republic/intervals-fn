@@ -38,7 +38,6 @@ const testFn = (
 };
 
 test('will intersect an array with an interval', t => {
-  t.plan(5);
   const r1 = [{ start: 0, end: 5 }, { start: 7, end: 9 }];
   const r2 = { start: 3, end: 8 };
   const testOutputFn = (res: IntervalSE[]): void => {
@@ -49,18 +48,24 @@ test('will intersect an array with an interval', t => {
 });
 
 test('will intersect two arrays', t => {
-  t.plan(5);
-  const r1 = [{ start: 0, end: 5 }, { start: 7, end: 9 }, { start: 11, end: 15 }];
+  const r1 = [
+    { start: 0, end: 5 },
+    { start: 7, end: 9 },
+    { start: 11, end: 15 },
+    { start: 18, end: 22 },
+    { start: 25, end: 42 },
+  ];
   const r2 = [{ start: 3, end: 6 }, { start: 8, end: 10 }, { start: 20, end: 21 }];
   const testOutputFn = (res: IntervalSE[]): void => {
+    t.true(res.length === 3);
     t.true(res[0].start === 3 && res[0].end === 5);
     t.true(res[1].start === 8 && res[1].end === 9);
+    t.true(res[2].start === 20 && res[2].end === 21);
   };
   testFn(r1, r2, intersect, testOutputFn, t);
 });
 
 test('will intersect two intervals', t => {
-  t.plan(3);
   const r1 = { start: 0, end: 5 };
   const r2 = { start: 3, end: 6 };
   const testOutputFn = (res: IntervalSE): void => {
@@ -70,7 +75,6 @@ test('will intersect two intervals', t => {
 });
 
 test('will intersect an interval and an array', t => {
-  t.plan(3);
   const r1 = { start: 0, end: 5 };
   const r2 = [{ start: 1, end: 2 }, { start: 5, end: 10 }];
   const testOutputFn = (res: IntervalSE): void => {
