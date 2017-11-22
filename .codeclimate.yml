@@ -1,8 +1,8 @@
 version: '2'
 plugins:
   tslint:
-    enabled: false
-    channel: beta
+    enabled: true
+    config: tslint.json
 exclude_patterns:
 - '**/*.test.ts'
 - 'dist/'
