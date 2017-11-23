@@ -19,9 +19,8 @@ import {
   reject,
   sortBy,
   unfold,
+  unnest,
 } from 'ramda';
-
-import { interval, IntervalAR, IntervalFT, IntervalSE } from './data.structures';
 
 const sortByStart = sortBy<IntervalSE>(prop('start'));
 
@@ -248,5 +247,33 @@ export function intersect<T extends interval>(intervalA: T | T[], intervalB?: T 
       };
     case 2:
       return setupForTwoIntervals<T>(intersectGen)(intervalA, intervalB as T | T[]);
+  }
+}
+
+const subtractInter = (mask: IntervalSE[], base: IntervalSE): IntervalSE[] => {
+  return complement(base, mask);
+};
+
+const substractGen = (base: IntervalSE[], mask: IntervalSE[]): IntervalSE[] => {
+  const intersection = intersectGen(base, mask);
+  return unnest(
+    base.map(b => subtractInter(intersection.filter(isOverlappingGen.bind(null, b)), b))
+  );
+};
+
+/**
+ * Subtract `arg1` with `arg2`.
+ *
+ */
+export function substract<T extends interval>(intervalA: T | T[], intervalB: T | T[]): T[];
+export function substract<T extends interval>(intervalA: T | T[]): (intervalB: T | T[]) => T[];
+export function substract<T extends interval>(intervalA: T | T[], intervalB?: T | T[]): any {
+  switch (arguments.length) {
+    case 1:
+      return (tt2: T | T[]): T[] => {
+        return setupForTwoIntervals<T>(substractGen)(intervalA, tt2);
+      };
+    case 2:
+      return setupForTwoIntervals<T>(substractGen)(intervalA, intervalB as T | T[]);
   }
 }

@@ -1,7 +1,7 @@
 import test from 'ava';
 
 import { IntervalAR, IntervalFT, IntervalSE } from './data.structures';
-import { complement, intersect, unify } from './lib';
+import { complement, intersect, substract, unify } from './lib';
 
 const prepareInput = (i1: IntervalSE | IntervalSE[], convertFn: (i: IntervalSE) => any) => {
   if (Array.isArray(i1)) {
@@ -40,6 +40,18 @@ const testFn = (
   testOutputFn(res3);
   t.throws(fn.bind(null, [{ test: 1 }], { test: 1 }), 'Unrecognized interval format');
 };
+
+test('will substract two arrays', t => {
+  const base = [{ start: 0, end: 10 }, { start: 12, end: 20 }];
+  const mask = [{ start: 1, end: 3 }, { start: 8, end: 13 }, { start: 18, end: 22 }];
+  const testOutputFn = (res: IntervalSE[]): void => {
+    t.true(res.length === 3);
+    t.true(res[0].start === 0 && res[0].end === 1);
+    t.true(res[1].start === 3 && res[1].end === 8);
+    t.true(res[2].start === 13 && res[2].end === 18);
+  };
+  testFn(base, mask, substract, testOutputFn, t);
+});
 
 test('will return complement', t => {
   const intervals = [{ start: 1, end: 2 }, { start: 5, end: 7 }, { start: 6, end: 8 }];
