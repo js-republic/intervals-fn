@@ -25,6 +25,8 @@ All function are curried. Output keeps the input's structure. No input mutation.
 { start: number, end: number };
 
 { from: number, start: number };
+
+[number, number];
 ```
 
 ## Installation
