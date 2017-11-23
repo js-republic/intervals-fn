@@ -88,6 +88,9 @@ const complementGen = (boundaries: IntervalSE, intervals: IntervalSE[]): Interva
 };
 
 const complementCurry = <T extends interval>(boundaries: interval, intervals: T | T[]): T[] => {
+  if (Array.isArray(intervals) && intervals.length < 1) {
+    return [boundaries] as T[];
+  }
   const typeStr = getType(intervals);
   const intervalSE = prepareInput(typeStr, intervals);
   const boundariesSE = convertFrom(getType(boundaries))(boundaries);
