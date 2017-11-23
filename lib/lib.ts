@@ -4,8 +4,6 @@ import {
   applySpec,
   concat,
   converge,
-  CurriedFunction2,
-  curry,
   drop,
   dropWhile,
   either,
