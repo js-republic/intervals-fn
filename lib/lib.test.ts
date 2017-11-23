@@ -65,6 +65,26 @@ test('will return complement', t => {
   testFn(boundaries, intervals, complement, testOutputFn, t);
 });
 
+test('will return complement when boundaries are included in intervals', t => {
+  const intervals = [{ start: 1, end: 2 }, { start: 5, end: 7 }, { start: 6, end: 8 }];
+  const boundaries = { start: 2, end: 6 };
+  const testOutputFn = (res: IntervalSE[]): void => {
+    t.true(res.length === 1);
+    t.true(res[0].start === 2 && res[0].end === 5);
+  };
+  testFn(boundaries, intervals, complement, testOutputFn, t);
+});
+
+test('will return interval corresponding to boundaries when empty interval', t => {
+  const intervals: IntervalSE[] = [];
+  const boundaries = { start: 0, end: 10 };
+  const testOutputFn = (res: IntervalSE[]): void => {
+    t.true(res.length === 1);
+    t.true(res[0].start === 0 && res[0].end === 10);
+  };
+  testFn(boundaries, intervals, complement, testOutputFn, t);
+});
+
 test('will unify two arrays', t => {
   const i1 = [{ start: 1, end: 2 }, { start: 7, end: 9 }];
   const i2 = [{ start: 4, end: 8 }];
