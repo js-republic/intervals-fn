@@ -22,6 +22,8 @@ import {
   unnest,
 } from 'ramda';
 
+import { interval, IntervalAR, IntervalFT, IntervalSE } from './data.structures';
+
 const sortByStart = sortBy<IntervalSE>(prop('start'));
 
 const convertFrom = (typeStr: string) => (r: interval): IntervalSE => {
@@ -123,7 +125,6 @@ export function complement<T extends interval>(boundaries: interval, interv?: T 
       return complementCurry<T>(boundaries, interv as T | T[]);
   }
 }
-
 
 const setupForTwoIntervals = <T extends interval>(
   fn: (i1: IntervalSE[], i2: IntervalSE[]) => IntervalSE[]
