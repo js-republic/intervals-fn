@@ -90,6 +90,13 @@ const complementGen = (boundaries: IntervalSE, intervals: IntervalSE[]): Interva
   ) as IntervalSE[];
 };
 
+const complementCurry = <T extends interval>(boundaries: interval, intervals: T | T[]): T[] => {
+  const typeStr = getType(intervals);
+  const intervalSE = prepareInput(typeStr, intervals);
+  const boundariesSE = convertFrom(getType(boundaries))(boundaries);
+  return complementGen(boundariesSE, intervalSE).map(convertTo<T>(typeStr));
+};
+
 /**
  * Complement of `intervals` bounded to `boundaries`. Convert space between two consecutive intervals into interval.
  *
@@ -104,14 +111,19 @@ const complementGen = (boundaries: IntervalSE, intervals: IntervalSE[]): Interva
  * @param intervals arg2: one interval or array of intervals that complement the result.
  * @returns array of intervals.
  */
-export const complement: CurriedFunction2<interval, interval | interval[], interval[]> = curry(
-  <T extends interval>(boundaries: interval, intervals: T | T[]): T[] => {
-    const typeStr = getType(intervals);
-    const intervalSE = prepareInput(typeStr, intervals);
-    const boundariesSE = convertFrom(getType(boundaries))(boundaries);
-    return complementGen(boundariesSE, intervalSE).map(convertTo<T>(typeStr));
+export function complement<T extends interval>(boundaries: interval, interv: T | T[]): T[];
+export function complement<T extends interval>(boundaries: interval): (interv: T | T[]) => T[];
+export function complement<T extends interval>(boundaries: interval, interv?: T | T[]): any {
+  switch (arguments.length) {
+    case 1:
+      return (tt2: T | T[]): T[] => {
+        return complementCurry<T>(boundaries, tt2);
+      };
+    case 2:
+      return complementCurry<T>(boundaries, interv as T | T[]);
   }
-);
+}
+
 
 const setupForTwoIntervals = <T extends interval>(
   fn: (i1: IntervalSE[], i2: IntervalSE[]) => IntervalSE[]
@@ -154,11 +166,22 @@ const unifyGen = pipe(
  * { start: 0, end: 4} | { start: 3, end: 7 } | [{ start: 0, end: 7 }]
  * { start: 0, end: 4} | [{ start: 3, end: 7 }, { start: 9, end: 11 }] | [{ start: 0, end: 7 }, { start: 9, end: 11 }]
  *
- * @param i1 arg1: one interval or array of intervals
- * @param i2 arg2: one interval or array of intervals
+ * @param intervalA arg1: one interval or array of intervals
+ * @param intervalB arg2: one interval or array of intervals
  * @returns union of `arg1` and `arg2`
  */
-export const unify = curry(setupForTwoIntervals(unifyGen));
+export function unify<T extends interval>(intervalA: T | T[], intervalB: T | T[]): T[];
+export function unify<T extends interval>(intervalA: T | T[]): (intervalB: T | T[]) => T[];
+export function unify<T extends interval>(intervalA: T | T[], intervalB?: T | T[]): any {
+  switch (arguments.length) {
+    case 1:
+      return (tt2: T | T[]): T[] => {
+        return setupForTwoIntervals<T>(unifyGen)(intervalA, tt2);
+      };
+    case 2:
+      return setupForTwoIntervals<T>(unifyGen)(intervalA, intervalB as T | T[]);
+  }
+}
 
 const intersectUnfolderSeed = (
   i1: IntervalSE[],
@@ -213,8 +236,19 @@ const intersectGen = (intervalsA: IntervalSE[], intervalsB: IntervalSE[]): Inter
  * { start: 0, end: 4 } | { start: 3, end: 7 } | [{ start: 3, end: 4 }]
  * [{ start: 0, end: 4 }, { start: 8, end: 11 }] | [{ start: 2, end: 9 }, { start: 10, end: 13 }] | [{ start: 2, end: 4 }, { start: 8, end: 9 }, { start: 10, end: 11 }]
  *
- * @param i1 arg1: one interval or array of intervals
- * @param i2 arg2: one interval or array of intervals
+ * @param intervalA arg1: one interval or array of intervals
+ * @param intervalB arg2: one interval or array of intervals
  * @returns intersection of `arg1` and `arg2`
  */
-export const intersect = curry(setupForTwoIntervals(intersectGen));
+export function intersect<T extends interval>(intervalA: T | T[], intervalB: T | T[]): T[];
+export function intersect<T extends interval>(intervalA: T | T[]): (intervalB: T | T[]) => T[];
+export function intersect<T extends interval>(intervalA: T | T[], intervalB?: T | T[]): any {
+  switch (arguments.length) {
+    case 1:
+      return (tt2: T | T[]): T[] => {
+        return setupForTwoIntervals<T>(intersectGen)(intervalA, tt2);
+      };
+    case 2:
+      return setupForTwoIntervals<T>(intersectGen)(intervalA, intervalB as T | T[]);
+  }
+}
