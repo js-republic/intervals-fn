@@ -1,6 +1,6 @@
 import test from 'ava';
 
-import { IntervalFT, IntervalSE } from './data.structures';
+import { IntervalAR, IntervalFT, IntervalSE } from './data.structures';
 import { complement, intersect, unify } from './lib';
 
 const prepareInput = (i1: IntervalSE | IntervalSE[], convertFn: (i: IntervalSE) => any) => {
@@ -15,7 +15,9 @@ const prepareOutput = (i1: IntervalSE[], convertFn: (i: any) => any) => {
 };
 
 const convertFTtoSE = (r: IntervalFT): IntervalSE => ({ start: r.from, end: r.to });
+const convertARtoSE = ([start, end]: IntervalAR): IntervalSE => ({ start, end });
 const convertSEtoFT = (r: IntervalSE): IntervalFT => ({ from: r.start, to: r.end });
+const convertSEtoAR = (r: IntervalSE): IntervalAR => [r.start, r.end];
 
 const testFn = (
   i1: IntervalSE | IntervalSE[],
@@ -29,8 +31,13 @@ const testFn = (
     fn(prepareInput(i1, convertSEtoFT), prepareInput(i2, convertSEtoFT)),
     convertFTtoSE
   );
+  const res3 = prepareOutput(
+    fn(prepareInput(i1, convertSEtoAR), prepareInput(i2, convertSEtoAR)),
+    convertARtoSE
+  );
   testOutputFn(res);
   testOutputFn(res2);
+  testOutputFn(res3);
   t.throws(fn.bind(null, [{ test: 1 }], { test: 1 }), 'Unrecognized interval format');
 };
 

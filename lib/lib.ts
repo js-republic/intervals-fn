@@ -23,7 +23,7 @@ import {
   unfold,
 } from 'ramda';
 
-import { interval, IntervalFT, IntervalSE } from './data.structures';
+import { interval, IntervalAR, IntervalFT, IntervalSE } from './data.structures';
 
 const sortByStart = sortBy<IntervalSE>(prop('start'));
 
@@ -31,16 +31,23 @@ const convertFrom = (typeStr: string) => (r: interval): IntervalSE => {
   switch (typeStr) {
     case 'IntervalFT':
       return convertFTtoSE(r as IntervalFT);
+    case 'IntervalAR':
+      return convertARtoSE(r as IntervalAR);
     default:
       return r as IntervalSE;
   }
 };
 
 const convertFTtoSE = (r: IntervalFT): IntervalSE => ({ start: r.from, end: r.to });
+const convertARtoSE = ([start, end]: IntervalAR): IntervalSE => ({ start, end });
 const convertSEtoFT = (r: IntervalSE): IntervalFT => ({ from: r.start, to: r.end });
+const convertSEtoAR = (r: IntervalSE): IntervalAR => [r.start, r.end];
 
 const getType = (r: interval | interval[]): string => {
   const inter = Array.isArray(r) ? r[0] : r;
+  if (typeof inter === 'number' || Array.isArray(inter)) {
+    return 'IntervalAR';
+  }
   if (inter.hasOwnProperty('start')) {
     return 'IntervalSE';
   }
@@ -54,16 +61,18 @@ const convertTo = <T extends interval>(typeStr: string) => (r: IntervalSE): T =>
   switch (typeStr) {
     case 'IntervalFT':
       return convertSEtoFT(r) as T;
+    case 'IntervalAR':
+      return convertSEtoAR(r) as T;
     default:
       return r as T;
   }
 };
 
 const prepareInput = (typeStr: string, i: interval | interval[]): IntervalSE[] => {
-  if (Array.isArray(i)) {
-    return i.map(convertFrom(typeStr));
+  if (Array.isArray(i) && typeof i[0] !== 'number') {
+    return (i as interval[]).map(convertFrom(typeStr));
   }
-  return [convertFrom(typeStr)(i)];
+  return [convertFrom(typeStr)(i as interval)];
 };
 
 const complementGen = (boundaries: IntervalSE, intervals: IntervalSE[]): IntervalSE[] => {
