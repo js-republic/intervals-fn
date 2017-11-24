@@ -218,7 +218,7 @@ export function isMeeting<T extends interval>(intervalA: T, intervalB?: T): any 
 }
 
 const isBeforeGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
-  return a.end < b.start;
+  return a.end <= b.start;
 };
 
 /**
@@ -238,7 +238,7 @@ export function isBefore<T extends interval>(intervalA: T, intervalB?: T): any {
 }
 
 const isAfterGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
-  return a.start > b.end;
+  return a.start >= b.end;
 };
 
 /**
