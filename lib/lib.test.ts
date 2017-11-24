@@ -1,7 +1,7 @@
 import test from 'ava';
 
 import { IntervalAR, IntervalFT, IntervalSE } from './data.structures';
-import { complement, intersect, isOverlapping, substract, unify } from './lib';
+import { complement, intersect, isMeeting, isOverlapping, substract, unify } from './lib';
 
 const prepareInput = (i1: IntervalSE | IntervalSE[], convertFn: (i: IntervalSE) => any) => {
   if (Array.isArray(i1)) {
@@ -55,6 +55,28 @@ const testFnToIntervals = (
   testOutputFn(prepareOutput(res3, convertARtoSE));
   t.throws(fn.bind(null, [{ test: 1 }], { test: 1 }), 'Unrecognized interval format');
 };
+
+test('will find meeting', t => {
+  const i1 = { start: 2, end: 5 };
+  const i2 = { start: 5, end: 8 };
+  const testOutputFn = t.true.bind(t);
+  testFnToBoolean(i1, i2, isMeeting, testOutputFn);
+  testFnToBoolean(i2, i1, isMeeting, testOutputFn);
+});
+
+test('will not find meeting when overlapping', t => {
+  const i1 = { start: 2, end: 5 };
+  const i2 = { start: 3, end: 8 };
+  const testOutputFn = t.false.bind(t);
+  testFnToBoolean(i1, i2, isMeeting, testOutputFn);
+});
+
+test('will not find meeting when gap', t => {
+  const i1 = { start: 2, end: 5 };
+  const i2 = { start: 6, end: 8 };
+  const testOutputFn = t.false.bind(t);
+  testFnToBoolean(i1, i2, isMeeting, testOutputFn);
+});
 
 test('will find overlapping with arrays', t => {
   const i1 = [{ start: 0, end: 5 }, { start: 10, end: 15 }];
