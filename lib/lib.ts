@@ -126,20 +126,72 @@ export function complement<T extends interval>(boundaries: interval, interv?: T 
   }
 }
 
-const setupForTwoIntervals = <T extends interval>(
-  fn: (i1: IntervalSE[], i2: IntervalSE[]) => IntervalSE[]
-) => (interval1: T | T[], interval2: T | T[]): T[] => {
+const setupForTwoInts = <T extends interval>(
+  interval1: T | T[],
+  interval2: T | T[]
+): [string, IntervalSE[], IntervalSE[]] => {
   const typeStr = getType(interval1);
-  const r1s = prepareInput(typeStr, interval1);
-  const r2s = prepareInput(typeStr, interval2);
-  return fn(r1s, r2s).map(convertTo<T>(typeStr));
+  return [typeStr, prepareInput(typeStr, interval1), prepareInput(typeStr, interval2)];
 };
 
-const isOverlappingGen = (a: IntervalSE, b: IntervalSE): boolean => {
+const setupForTwoIntsToInts = <T extends interval>(
+  fn: (i1: IntervalSE[], i2: IntervalSE[]) => IntervalSE[]
+) => (interval1: T | T[], interval2: T | T[]): T[] => {
+  const [typeStr, arg1, arg2] = setupForTwoInts(interval1, interval2);
+  return fn(arg1, arg2).map(convertTo<T>(typeStr));
+};
+
+const setupForTwoIntsToBool = <T extends interval>(
+  fn: (i1: IntervalSE[], i2: IntervalSE[]) => boolean
+) => (interval1: T | T[], interval2: T | T[]): boolean => {
+  const [, arg1, arg2] = setupForTwoInts(interval1, interval2);
+  return fn(arg1, arg2);
+};
+
+const isOverlappingSimple = (a: IntervalSE, b: IntervalSE): boolean => {
   return b.start < a.end && b.end > a.start;
 };
 
-const isAdjacentGen = (a: IntervalSE, b: IntervalSE): boolean => {
+const isOverlappingRec = (intervalsA: IntervalSE[], intervalsB: IntervalSE[]): boolean => {
+  if (any(isEmpty)([intervalsA, intervalsB])) {
+    return false;
+  }
+  const intsA = intervalsA[0];
+  const newInters2 = dropWhile(i => i.end <= intsA.start, intervalsB);
+  if (isEmpty(newInters2)) {
+    return false;
+  }
+  const intsB = newInters2[0];
+  return isOverlappingSimple(intsA, intsB)
+    ? true
+    : isOverlappingRec(drop(1, intervalsA), newInters2);
+};
+
+const isOverlappingGen = (intervalsA: IntervalSE[], intervalsB: IntervalSE[]): boolean => {
+  const intervalsAS = sortByStart(intervalsA);
+  const intervalsBS = sortByStart(intervalsB);
+  return isOverlappingRec(intervalsAS, intervalsBS);
+};
+
+/**
+ * Test if two intervals (or array of intervals) overlaps.
+ */
+export function isOverlapping<T extends interval>(intervalA: T | T[], intervalB: T | T[]): boolean;
+export function isOverlapping<T extends interval>(
+  intervalA: T | T[]
+): (intervalB: T | T[]) => boolean;
+export function isOverlapping<T extends interval>(intervalA: T | T[], intervalB?: T | T[]): any {
+  switch (arguments.length) {
+    case 1:
+      return (tt2: T | T[]): boolean => {
+        return setupForTwoIntsToBool<T>(isOverlappingGen)(intervalA, tt2);
+      };
+    case 2:
+      return setupForTwoIntsToBool<T>(isOverlappingGen)(intervalA, intervalB as T | T[]);
+  }
+}
+
+const isMeetingGen = (a: IntervalSE, b: IntervalSE): boolean => {
   return a.start === b.end || a.end === b.start;
 };
 
@@ -148,7 +200,7 @@ const propFromNthArg = (n: number, propName: string) => pipe(nthArg(n), prop(pro
 const unifyGen = pipe(
   concat as (a: IntervalSE[], b: IntervalSE[]) => IntervalSE[],
   sortByStart,
-  groupWith(either(isOverlappingGen, isAdjacentGen)),
+  groupWith(either(isOverlappingSimple, isMeetingGen)),
   map(
     converge(
       applySpec<IntervalSE>({ start: propFromNthArg(0, 'start'), end: propFromNthArg(1, 'end') }),
@@ -177,10 +229,10 @@ export function unify<T extends interval>(intervalA: T | T[], intervalB?: T | T[
   switch (arguments.length) {
     case 1:
       return (tt2: T | T[]): T[] => {
-        return setupForTwoIntervals<T>(unifyGen)(intervalA, tt2);
+        return setupForTwoIntsToInts<T>(unifyGen)(intervalA, tt2);
       };
     case 2:
-      return setupForTwoIntervals<T>(unifyGen)(intervalA, intervalB as T | T[]);
+      return setupForTwoIntsToInts<T>(unifyGen)(intervalA, intervalB as T | T[]);
   }
 }
 
@@ -247,10 +299,10 @@ export function intersect<T extends interval>(intervalA: T | T[], intervalB?: T 
   switch (arguments.length) {
     case 1:
       return (tt2: T | T[]): T[] => {
-        return setupForTwoIntervals<T>(intersectGen)(intervalA, tt2);
+        return setupForTwoIntsToInts<T>(intersectGen)(intervalA, tt2);
       };
     case 2:
-      return setupForTwoIntervals<T>(intersectGen)(intervalA, intervalB as T | T[]);
+      return setupForTwoIntsToInts<T>(intersectGen)(intervalA, intervalB as T | T[]);
   }
 }
 
@@ -261,7 +313,7 @@ const subtractInter = (mask: IntervalSE[], base: IntervalSE): IntervalSE[] => {
 const substractGen = (base: IntervalSE[], mask: IntervalSE[]): IntervalSE[] => {
   const intersection = intersectGen(base, mask);
   return unnest(
-    base.map(b => subtractInter(intersection.filter(isOverlappingGen.bind(null, b)), b))
+    base.map(b => subtractInter(intersection.filter(isOverlappingSimple.bind(null, b)), b))
   );
 };
 
@@ -275,9 +327,9 @@ export function substract<T extends interval>(intervalA: T | T[], intervalB?: T 
   switch (arguments.length) {
     case 1:
       return (tt2: T | T[]): T[] => {
-        return setupForTwoIntervals<T>(substractGen)(intervalA, tt2);
+        return setupForTwoIntsToInts<T>(substractGen)(intervalA, tt2);
       };
     case 2:
-      return setupForTwoIntervals<T>(substractGen)(intervalA, intervalB as T | T[]);
+      return setupForTwoIntsToInts<T>(substractGen)(intervalA, intervalB as T | T[]);
   }
 }
