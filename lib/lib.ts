@@ -196,7 +196,19 @@ const curryBool = <T extends interval>(
 };
 
 /**
- * Test if two intervals (or array of intervals) overlaps.
+ * Test if `intervalA` overlaps with `intervalB`.
+ *
+ * Curried function. Accept array of intervals.
+ *
+ * intervalA | intervalB | result
+ * --- | --- | ---
+ * { start: 0, end: 10} | { start: 3, end: 7 } | true
+ * { start: 0, end: 5} | { start: 5, end: 7 } | false
+ * { start: 5, end: 10} | [{ start: 0, end: 4 }, { start: 7, end: 8 }] | true
+ *
+ * @param intervalA arg1: interval or array of intervals
+ * @param intervalB arg2: interval or array of intervals
+ * @returns true if overlaps
  */
 export function isOverlapping<T extends interval>(intervalA: T | T[], intervalB: T | T[]): boolean;
 export function isOverlapping<T extends interval>(
@@ -214,7 +226,18 @@ const isMeetingGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
 };
 
 /**
- * Test if two intervals are adjacent.
+ * Test if `intervalA` is adjacent to (meets) `intervalB`.
+ *
+ * Curried function.
+ *
+ * intervalA | intervalB | result
+ * --- | --- | ---
+ * { start: 0, end: 10} | { start: 3, end: 7 } | false
+ * { start: 0, end: 5} | { start: 5, end: 7 } | true
+ *
+ * @param intervalA arg1: interval
+ * @param intervalB arg2: interval
+ * @returns true if adjacent
  */
 export function isMeeting<T extends interval>(intervalA: T, intervalB: T): boolean;
 export function isMeeting<T extends interval>(intervalA: T): (intervalB: T) => boolean;
@@ -227,7 +250,18 @@ const isBeforeGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
 };
 
 /**
- * Test if one interval is before another.
+ * Test if `intervalA` is before or adjacent `intervalB`.
+ *
+ * Curried function.
+ *
+ * intervalA | intervalB | result
+ * --- | --- | ---
+ * { start: 0, end: 2} | { start: 3, end: 7 } | true
+ * { start: 0, end: 5} | { start: 3, end: 7 } | false
+ *
+ * @param intervalA arg1: interval
+ * @param intervalB arg2: interval
+ * @returns true if before
  */
 export function isBefore<T extends interval>(intervalA: T, intervalB: T): boolean;
 export function isBefore<T extends interval>(intervalA: T): (intervalB: T) => boolean;
@@ -240,7 +274,18 @@ const isAfterGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
 };
 
 /**
- * Test if one interval is before another.
+ * Test if `intervalA` is after or adjacent `intervalB`.
+ *
+ * Curried function.
+ *
+ * intervalA | intervalB | result
+ * --- | --- | ---
+ * { start: 5, end: 10} | { start: 3, end: 4 } | true
+ * { start: 5, end: 10} | { start: 3, end: 6 } | false
+ *
+ * @param intervalA arg1: interval
+ * @param intervalB arg2: interval
+ * @returns true if after
  */
 export function isAfter<T extends interval>(intervalA: T, intervalB: T): boolean;
 export function isAfter<T extends interval>(intervalA: T): (intervalB: T) => boolean;
@@ -253,7 +298,18 @@ const isStartingGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
 };
 
 /**
- * Test if one interval is before another.
+ * Test if `intervalA` and `intervalB` share the same starting point.
+ *
+ * Curried function.
+ *
+ * intervalA | intervalB | result
+ * --- | --- | ---
+ * { start: 5, end: 10} | { start: 5, end: 4 } | true
+ * { start: 5, end: 10} | { start: 0, end: 10 } | false
+ *
+ * @param intervalA arg1: interval
+ * @param intervalB arg2: interval
+ * @returns true if same starting point
  */
 export function isStarting<T extends interval>(intervalA: T, intervalB: T): boolean;
 export function isStarting<T extends interval>(intervalA: T): (intervalB: T) => boolean;
@@ -266,7 +322,18 @@ const isEndingGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
 };
 
 /**
- * Test if one interval is before another.
+ * Test if `intervalA` and `intervalB` share the same ending point.
+ *
+ * Curried function.
+ *
+ * intervalA | intervalB | result
+ * --- | --- | ---
+ * { start: 5, end: 10} | { start: 0, end: 10 } | true
+ * { start: 5, end: 10} | { start: 5, end: 7 } | false
+ *
+ * @param intervalA arg1: interval
+ * @param intervalB arg2: interval
+ * @returns true if same ending point
  */
 export function isEnding<T extends interval>(intervalA: T, intervalB: T): boolean;
 export function isEnding<T extends interval>(intervalA: T): (intervalB: T) => boolean;
@@ -279,7 +346,19 @@ const isDuringGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
 };
 
 /**
- * Test if one interval is before another.
+ * Test if `intervalA` occurs in `intervalB`. `intervalsB` act as boundaries. Can share starting and/or ending point.
+ *
+ * Curried function.
+ *
+ * intervalA | intervalB | result
+ * --- | --- | ---
+ * { start: 2, end: 6} | { start: 0, end: 10 } | true
+ * { start: 5, end: 10} | { start: 0, end: 10 } | true
+ * { start: 5, end: 10} | { start: 0, end: 9 } | false
+ *
+ * @param intervalA arg1: interval
+ * @param intervalB arg2: interval
+ * @returns true if `intervalA` occurs in `intervalB`
  */
 export function isDuring<T extends interval>(intervalA: T, intervalB: T): boolean;
 export function isDuring<T extends interval>(intervalA: T): (intervalB: T) => boolean;
@@ -292,7 +371,18 @@ const isEqualGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
 };
 
 /**
- * Test if one interval is before another.
+ * Test if `intervalA` is equivalent to `intervalB`.
+ *
+ * Curried function.
+ *
+ * intervalA | intervalB | result
+ * --- | --- | ---
+ * { start: 5, end: 10} | { start: 5, end: 10 } | true
+ * { start: 5, end: 10} | { start: 0, end: 10 } | false
+ *
+ * @param intervalA arg1: interval
+ * @param intervalB arg2: interval
+ * @returns true if equivalent
  */
 export function isEqual<T extends interval>(intervalA: T, intervalB: T): boolean;
 export function isEqual<T extends interval>(intervalA: T): (intervalB: T) => boolean;
@@ -423,8 +513,18 @@ const substractGen = (base: IntervalSE[], mask: IntervalSE[]): IntervalSE[] => {
 };
 
 /**
- * Subtract `arg1` with `arg2`.
+ * Subtact `intervalA` with `intervalB`. `intervalB` act as a mask.
  *
+ * Curried function. Accept array of intervals. Doesn't mutate input. Output keeps input's structure.
+ *
+ * interval(s) A | interval(s) B | result
+ * --- | --- | ---
+ * { start: 0, end: 4 } | { start: 3, end: 7 } | [{ start: 0, end: 3 }]
+ * [{ start: 0, end: 4 }, { start: 8, end: 11 }] | [{ start: 2, end: 9 }, { start: 10, end: 13 }] | [{ start: 0, end: 2 }, { start: 9, end: 10 }]
+ *
+ * @param intervalA arg1: one interval or array of intervals
+ * @param intervalB arg2: one interval or array of intervals
+ * @returns intersection of `arg1` and `arg2`
  */
 export function substract<T extends interval>(intervalA: T | T[], intervalB: T | T[]): T[];
 export function substract<T extends interval>(intervalA: T | T[]): (intervalB: T | T[]) => T[];
