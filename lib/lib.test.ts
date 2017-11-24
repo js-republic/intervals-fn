@@ -155,6 +155,13 @@ test('will not find before', t => {
   testFnToBoolean(i1, i2, isBefore, testOutputFn);
 });
 
+test('will not find before when overlapping', t => {
+  const i1 = { start: 0, end: 5 };
+  const i2 = { start: 4, end: 8 };
+  const testOutputFn = t.false.bind(t);
+  testFnToBoolean(i1, i2, isBefore, testOutputFn);
+});
+
 test('will find meeting', t => {
   const i1 = { start: 2, end: 5 };
   const i2 = { start: 5, end: 8 };
