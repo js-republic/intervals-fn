@@ -6,6 +6,7 @@ import {
   intersect,
   isAfter,
   isBefore,
+  isEnding,
   isMeeting,
   isOverlapping,
   isStarting,
@@ -65,6 +66,21 @@ const testFnToIntervals = (
   testOutputFn(prepareOutput(res3, convertARtoSE));
   t.throws(fn.bind(null, [{ test: 1 }], { test: 1 }), 'Unrecognized interval format');
 };
+
+test('will find ending', t => {
+  const i1 = { start: 1, end: 8 };
+  const i2 = { start: 0, end: 8 };
+  const testOutputFn = t.true.bind(t);
+  testFnToBoolean(i1, i2, isEnding, testOutputFn);
+  testFnToBoolean(i2, i1, isEnding, testOutputFn);
+});
+
+test('will not find ending', t => {
+  const i1 = { start: 0, end: 5 };
+  const i2 = { start: 0, end: 8 };
+  const testOutputFn = t.false.bind(t);
+  testFnToBoolean(i1, i2, isEnding, testOutputFn);
+});
 
 test('will find starting', t => {
   const i1 = { start: 0, end: 5 };
