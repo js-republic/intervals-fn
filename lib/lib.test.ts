@@ -1,7 +1,16 @@
 import test from 'ava';
 
 import { IntervalAR, IntervalFT, IntervalSE } from './data.structures';
-import { complement, intersect, isBefore, isMeeting, isOverlapping, substract, unify } from './lib';
+import {
+  complement,
+  intersect,
+  isAfter,
+  isBefore,
+  isMeeting,
+  isOverlapping,
+  substract,
+  unify,
+} from './lib';
 
 const prepareInput = (i1: IntervalSE | IntervalSE[], convertFn: (i: IntervalSE) => any) => {
   if (Array.isArray(i1)) {
@@ -55,6 +64,20 @@ const testFnToIntervals = (
   testOutputFn(prepareOutput(res3, convertARtoSE));
   t.throws(fn.bind(null, [{ test: 1 }], { test: 1 }), 'Unrecognized interval format');
 };
+
+test('will find after', t => {
+  const i1 = { start: 0, end: 5 };
+  const i2 = { start: 6, end: 8 };
+  const testOutputFn = t.true.bind(t);
+  testFnToBoolean(i2, i1, isAfter, testOutputFn);
+});
+
+test('will not find after when adjacent', t => {
+  const i1 = { start: 0, end: 5 };
+  const i2 = { start: 5, end: 8 };
+  const testOutputFn = t.false.bind(t);
+  testFnToBoolean(i2, i1, isAfter, testOutputFn);
+});
 
 test('will find before', t => {
   const i1 = { start: 0, end: 5 };
