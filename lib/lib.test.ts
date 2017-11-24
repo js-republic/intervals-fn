@@ -1,7 +1,7 @@
 import test from 'ava';
 
 import { IntervalAR, IntervalFT, IntervalSE } from './data.structures';
-import { complement, intersect, substract, unify } from './lib';
+import { complement, intersect, isOverlapping, substract, unify } from './lib';
 
 const prepareInput = (i1: IntervalSE | IntervalSE[], convertFn: (i: IntervalSE) => any) => {
   if (Array.isArray(i1)) {
@@ -19,27 +19,63 @@ const convertARtoSE = ([start, end]: IntervalAR): IntervalSE => ({ start, end })
 const convertSEtoFT = (r: IntervalSE): IntervalFT => ({ from: r.start, to: r.end });
 const convertSEtoAR = (r: IntervalSE): IntervalAR => [r.start, r.end];
 
-const testFn = (
+const testFnInputs = (
+  i1: IntervalSE | IntervalSE[],
+  i2: IntervalSE | IntervalSE[],
+  fn: (...n: any[]) => any
+) => {
+  const res = fn(i1)(i2);
+  const res2 = fn(prepareInput(i1, convertSEtoFT), prepareInput(i2, convertSEtoFT));
+  const res3 = fn(prepareInput(i1, convertSEtoAR), prepareInput(i2, convertSEtoAR));
+  return [res, res2, res3];
+};
+
+const testFnToBoolean = (
+  i1: IntervalSE | IntervalSE[],
+  i2: IntervalSE | IntervalSE[],
+  fn: (...n: any[]) => any,
+  testOutputFn: (n: any) => void
+): void => {
+  const [res, res2, res3] = testFnInputs(i1, i2, fn);
+  testOutputFn(res);
+  testOutputFn(res2);
+  testOutputFn(res3);
+};
+
+const testFnToIntervals = (
   i1: IntervalSE | IntervalSE[],
   i2: IntervalSE | IntervalSE[],
   fn: (...n: any[]) => any,
   testOutputFn: (n: any) => void,
   t: any
 ): void => {
-  const res = fn(i1)(i2);
-  const res2 = prepareOutput(
-    fn(prepareInput(i1, convertSEtoFT), prepareInput(i2, convertSEtoFT)),
-    convertFTtoSE
-  );
-  const res3 = prepareOutput(
-    fn(prepareInput(i1, convertSEtoAR), prepareInput(i2, convertSEtoAR)),
-    convertARtoSE
-  );
+  const [res, res2, res3] = testFnInputs(i1, i2, fn);
   testOutputFn(res);
-  testOutputFn(res2);
-  testOutputFn(res3);
+  testOutputFn(prepareOutput(res2, convertFTtoSE));
+  testOutputFn(prepareOutput(res3, convertARtoSE));
   t.throws(fn.bind(null, [{ test: 1 }], { test: 1 }), 'Unrecognized interval format');
 };
+
+test('will find overlapping with arrays', t => {
+  const i1 = [{ start: 0, end: 5 }, { start: 10, end: 15 }];
+  const i2 = [{ start: 8, end: 11 }];
+  const testOutputFn = t.true.bind(t);
+  testFnToBoolean(i1, i2, isOverlapping, testOutputFn);
+});
+
+test('will not find overlapping with interval and empty array', t => {
+  const i1 = { start: 10, end: 15 };
+  const i2: IntervalSE[] = [];
+  const testOutputFn = t.false.bind(t);
+  testFnToBoolean(i1, i2, isOverlapping, testOutputFn);
+});
+
+test('will not find overlapping with arrays', t => {
+  const i1 = [{ start: 0, end: 5 }, { start: 10, end: 15 }];
+  const i2 = [{ start: 6, end: 9 }];
+  const testOutputFn = t.false.bind(t);
+  testFnToBoolean(i1, i2, isOverlapping, testOutputFn);
+});
 
 test('will substract two arrays', t => {
   const base = [{ start: 0, end: 10 }, { start: 12, end: 20 }];
@@ -50,7 +86,7 @@ test('will substract two arrays', t => {
     t.true(res[1].start === 3 && res[1].end === 8);
     t.true(res[2].start === 13 && res[2].end === 18);
   };
-  testFn(base, mask, substract, testOutputFn, t);
+  testFnToIntervals(base, mask, substract, testOutputFn, t);
 });
 
 test('will return complement', t => {
@@ -62,7 +98,7 @@ test('will return complement', t => {
     t.true(res[1].start === 2 && res[1].end === 5);
     t.true(res[2].start === 8 && res[2].end === 10);
   };
-  testFn(boundaries, intervals, complement, testOutputFn, t);
+  testFnToIntervals(boundaries, intervals, complement, testOutputFn, t);
 });
 
 test('will return complement when boundaries are included in intervals', t => {
@@ -72,7 +108,7 @@ test('will return complement when boundaries are included in intervals', t => {
     t.true(res.length === 1);
     t.true(res[0].start === 2 && res[0].end === 5);
   };
-  testFn(boundaries, intervals, complement, testOutputFn, t);
+  testFnToIntervals(boundaries, intervals, complement, testOutputFn, t);
 });
 
 test('will return interval corresponding to boundaries when empty interval', t => {
@@ -82,7 +118,7 @@ test('will return interval corresponding to boundaries when empty interval', t =
     t.true(res.length === 1);
     t.true(res[0].start === 0 && res[0].end === 10);
   };
-  testFn(boundaries, intervals, complement, testOutputFn, t);
+  testFnToIntervals(boundaries, intervals, complement, testOutputFn, t);
 });
 
 test('will unify two arrays', t => {
@@ -93,7 +129,7 @@ test('will unify two arrays', t => {
     t.true(res[0].start === 1 && res[0].end === 2);
     t.true(res[1].start === 4 && res[1].end === 9);
   };
-  testFn(i1, i2, unify, testOutputFn, t);
+  testFnToIntervals(i1, i2, unify, testOutputFn, t);
 });
 
 test('will intersect an array with an interval', t => {
@@ -103,7 +139,7 @@ test('will intersect an array with an interval', t => {
     t.true(res[0].start === 3 && res[0].end === 5);
     t.true(res[1].start === 7 && res[1].end === 8);
   };
-  testFn(r1, r2, intersect, testOutputFn, t);
+  testFnToIntervals(r1, r2, intersect, testOutputFn, t);
 });
 
 test('will intersect two arrays', t => {
@@ -121,8 +157,8 @@ test('will intersect two arrays', t => {
     t.true(res[1].start === 8 && res[1].end === 9);
     t.true(res[2].start === 20 && res[2].end === 21);
   };
-  testFn(r1, r2, intersect, testOutputFn, t);
-  testFn(
+  testFnToIntervals(r1, r2, intersect, testOutputFn, t);
+  testFnToIntervals(
     [{ start: 0, end: 5 }, { start: 10, end: 15 }],
     [{ start: 7, end: 9 }],
     intersect,
@@ -141,7 +177,7 @@ test('will intersect correctly if one interval from arg1 intersects many from ar
     t.true(res[0].start === 3 && res[0].end === 5);
     t.true(res[1].start === 6 && res[1].end === 7);
   };
-  testFn(i1, i2, intersect, testOutputFn, t);
+  testFnToIntervals(i1, i2, intersect, testOutputFn, t);
 });
 
 test('will intersect two intervals', t => {
@@ -151,7 +187,7 @@ test('will intersect two intervals', t => {
     t.true(res.length === 1);
     t.true(res[0].start === 3 && res[0].end === 5);
   };
-  testFn(r1, r2, intersect, testOutputFn, t);
+  testFnToIntervals(r1, r2, intersect, testOutputFn, t);
 });
 
 test('will intersect an interval and an array', t => {
@@ -161,5 +197,5 @@ test('will intersect an interval and an array', t => {
     t.true(res.length === 1);
     t.true(res[0].start === 1 && res[0].end === 2);
   };
-  testFn(r1, r2, intersect, testOutputFn, t);
+  testFnToIntervals(r1, r2, intersect, testOutputFn, t);
 });
