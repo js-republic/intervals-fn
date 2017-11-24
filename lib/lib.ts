@@ -152,12 +152,15 @@ const isOverlappingSimple = (a: IntervalSE, b: IntervalSE): boolean => {
   return b.start < a.end && b.end > a.start;
 };
 
+const beforeOrAdjTo = (afterInt: IntervalSE) => (beforeInt: IntervalSE) =>
+  beforeInt.end <= afterInt.start;
+
 const isOverlappingRec = (intervalsA: IntervalSE[], intervalsB: IntervalSE[]): boolean => {
   if (any(isEmpty)([intervalsA, intervalsB])) {
     return false;
   }
   const intsA = intervalsA[0];
-  const newInters2 = dropWhile(i => i.end <= intsA.start, intervalsB);
+  const newInters2 = dropWhile(beforeOrAdjTo(intsA), intervalsB);
   if (isEmpty(newInters2)) {
     return false;
   }
@@ -330,12 +333,12 @@ const intersectUnfolder = (
   if (any(isEmpty)([inters1, inters2])) {
     return false;
   }
-  const newInters1 = dropWhile(i => i.end <= inters2[0].start, inters1);
+  const newInters1 = dropWhile(beforeOrAdjTo(inters2[0]), inters1);
   if (isEmpty(newInters1)) {
     return false;
   }
   const inter1 = newInters1[0];
-  const newInters2 = dropWhile(i => i.end <= inter1.start, inters2);
+  const newInters2 = dropWhile(beforeOrAdjTo(inter1), inters2);
   if (isEmpty(newInters2)) {
     return false;
   }
@@ -344,7 +347,7 @@ const intersectUnfolder = (
     end: Math.min(inter1.end, inter2.end),
     start: Math.max(inter1.start, inter2.start),
   };
-  const resultInter = minMaxInter.end <= minMaxInter.start ? null : minMaxInter;
+  const resultInter = beforeOrAdjTo(minMaxInter)(minMaxInter) ? null : minMaxInter;
   const seed = intersectUnfolderSeed(newInters1, newInters2);
   return [resultInter, seed];
 };
