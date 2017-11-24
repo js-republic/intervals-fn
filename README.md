@@ -12,10 +12,11 @@
 
 ## What's in the box
 
-All function are curried. Output keeps the input's structure. No input mutation.
+All function are curried. Output keeps the input's structure and type. No input mutation.
 ### Binary operations
 * Intersection
 * Union
+* Subtraction
 ### Manipulations
 * Complement
 
