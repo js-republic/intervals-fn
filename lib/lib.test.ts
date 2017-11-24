@@ -8,6 +8,7 @@ import {
   isBefore,
   isMeeting,
   isOverlapping,
+  isStarting,
   substract,
   unify,
 } from './lib';
@@ -64,6 +65,21 @@ const testFnToIntervals = (
   testOutputFn(prepareOutput(res3, convertARtoSE));
   t.throws(fn.bind(null, [{ test: 1 }], { test: 1 }), 'Unrecognized interval format');
 };
+
+test('will find starting', t => {
+  const i1 = { start: 0, end: 5 };
+  const i2 = { start: 0, end: 8 };
+  const testOutputFn = t.true.bind(t);
+  testFnToBoolean(i1, i2, isStarting, testOutputFn);
+  testFnToBoolean(i2, i1, isStarting, testOutputFn);
+});
+
+test('will not find starting', t => {
+  const i1 = { start: 1, end: 5 };
+  const i2 = { start: 0, end: 8 };
+  const testOutputFn = t.false.bind(t);
+  testFnToBoolean(i1, i2, isStarting, testOutputFn);
+});
 
 test('will find after', t => {
   const i1 = { start: 0, end: 5 };

@@ -254,6 +254,26 @@ export function isAfter<T extends interval>(intervalA: T, intervalB?: T): any {
   }
 }
 
+const isStartingGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
+  return a.start === b.start;
+};
+
+/**
+ * Test if one interval is before another.
+ */
+export function isStarting<T extends interval>(intervalA: T, intervalB: T): boolean;
+export function isStarting<T extends interval>(intervalA: T): (intervalB: T) => boolean;
+export function isStarting<T extends interval>(intervalA: T, intervalB?: T): any {
+  switch (arguments.length) {
+    case 1:
+      return (tt2: T | T[]): boolean => {
+        return setupForTwoIntsToBool<T>(isStartingGen)(intervalA, tt2);
+      };
+    case 2:
+      return setupForTwoIntsToBool<T>(isStartingGen)(intervalA, intervalB as T);
+  }
+}
+
 const propFromNthArg = (n: number, propName: string) => pipe(nthArg(n), prop(propName));
 
 const unifyGen = pipe(
