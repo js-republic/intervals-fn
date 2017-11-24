@@ -191,16 +191,35 @@ export function isOverlapping<T extends interval>(intervalA: T | T[], intervalB?
   }
 }
 
-const isMeetingGen = (a: IntervalSE, b: IntervalSE): boolean => {
+const isMeetingSimple = (a: IntervalSE, b: IntervalSE): boolean => {
   return a.start === b.end || a.end === b.start;
 };
+const isMeetingGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
+  return isMeetingSimple(a, b);
+};
+
+/**
+ * Test if two intervals are adjacent.
+ */
+export function isMeeting<T extends interval>(intervalA: T, intervalB: T): boolean;
+export function isMeeting<T extends interval>(intervalA: T): (intervalB: T) => boolean;
+export function isMeeting<T extends interval>(intervalA: T, intervalB?: T): any {
+  switch (arguments.length) {
+    case 1:
+      return (tt2: T | T[]): boolean => {
+        return setupForTwoIntsToBool<T>(isMeetingGen)(intervalA, tt2);
+      };
+    case 2:
+      return setupForTwoIntsToBool<T>(isMeetingGen)(intervalA, intervalB as T);
+  }
+}
 
 const propFromNthArg = (n: number, propName: string) => pipe(nthArg(n), prop(propName));
 
 const unifyGen = pipe(
   concat as (a: IntervalSE[], b: IntervalSE[]) => IntervalSE[],
   sortByStart,
-  groupWith(either(isOverlappingSimple, isMeetingGen)),
+  groupWith(either(isOverlappingSimple, isMeetingSimple)),
   map(
     converge(
       applySpec<IntervalSE>({ start: propFromNthArg(0, 'start'), end: propFromNthArg(1, 'end') }),
