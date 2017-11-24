@@ -287,6 +287,19 @@ export function isDuring<T extends interval>(intervalA: T, intervalB?: T): any {
   return curryBool<T>(arguments.length, intervalA, intervalB, isDuringGen);
 }
 
+const isEqualGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
+  return a.start === b.start && a.end === b.end;
+};
+
+/**
+ * Test if one interval is before another.
+ */
+export function isEqual<T extends interval>(intervalA: T, intervalB: T): boolean;
+export function isEqual<T extends interval>(intervalA: T): (intervalB: T) => boolean;
+export function isEqual<T extends interval>(intervalA: T, intervalB?: T): any {
+  return curryBool<T>(arguments.length, intervalA, intervalB, isEqualGen);
+}
+
 const propFromNthArg = (n: number, propName: string) => pipe(nthArg(n), prop(propName));
 
 const unifyGen = pipe(

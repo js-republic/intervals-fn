@@ -8,6 +8,7 @@ import {
   isBefore,
   isDuring,
   isEnding,
+  isEqual,
   isMeeting,
   isOverlapping,
   isStarting,
@@ -67,6 +68,20 @@ const testFnToIntervals = (
   testOutputFn(prepareOutput(res3, convertARtoSE));
   t.throws(fn.bind(null, [{ test: 1 }], { test: 1 }), 'Unrecognized interval format');
 };
+
+test('will find equal', t => {
+  const i1 = { start: 0, end: 42 };
+  const i2 = { start: 0, end: 42 };
+  const testOutputFn = t.true.bind(t);
+  testFnToBoolean(i1, i2, isEqual, testOutputFn);
+});
+
+test('will not find equal', t => {
+  const i1 = { start: 0, end: 9 };
+  const i2 = { start: 0, end: 8 };
+  const testOutputFn = t.false.bind(t);
+  testFnToBoolean(i1, i2, isEqual, testOutputFn);
+});
 
 test('will find during', t => {
   const i1 = { start: 1, end: 8 };
