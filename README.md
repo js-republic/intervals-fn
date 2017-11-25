@@ -19,6 +19,15 @@ All function are curried. Output keeps the input's structure and type. No input 
 * Subtraction
 ### Manipulations
 * Complement
+### Tests ([Allen's interval relations](https://en.wikipedia.org/wiki/Allen%27s_interval_algebra))
+* After
+* Before
+* During
+* Ending
+* Equal
+* Meeting
+* Overlapping
+* Starting
 
 ## Accepted input
 
