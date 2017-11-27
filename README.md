@@ -14,11 +14,11 @@
 
 All function are curried. Output keeps the input's structure and type. No input mutation.
 ### Binary operations
-* Intersection
-* Union
-* Subtraction
+* Intersection *
+* Union *
+* Subtraction *
 ### Manipulations
-* Complement
+* Complement *
 ### Tests ([Allen's interval relations](https://en.wikipedia.org/wiki/Allen%27s_interval_algebra))
 * After
 * Before
@@ -26,10 +26,11 @@ All function are curried. Output keeps the input's structure and type. No input 
 * Ending
 * Equal
 * Meeting
-* Overlapping
+* Overlapping *
 * Starting
 
 ## Accepted input
+Functions marked with `*` both accept interval and Array/ReadonlyArray of interval
 
 ```typescript
 { start: number, end: number };
@@ -51,6 +52,9 @@ $ npm install intervals-fn@dev --save
 
 Visit the homepage for an extensive API documentation:<br>
 [https://js-republic.github.io/intervals-fn](https://js-republic.github.io/intervals-fn)
+
+## TypeScript support
+Intervals-fn includes typings for TypeScript.
 
 ## Contributing
 
