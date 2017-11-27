@@ -22,7 +22,7 @@ import {
   unnest,
 } from 'ramda';
 
-import { interval, IntervalAR, IntervalFT, IntervalSE } from './data.structures';
+import { interval, IntervalAR, IntervalFT, IntervalSE, roai, roat } from './data.structures';
 
 type twoIntsToBoolFn = (i1: IntervalSE[], i2: IntervalSE[]) => boolean;
 
@@ -44,7 +44,7 @@ const convertARtoSE = ([start, end]: IntervalAR): IntervalSE => ({ start, end })
 const convertSEtoFT = (r: IntervalSE): IntervalFT => ({ from: r.start, to: r.end });
 const convertSEtoAR = (r: IntervalSE): IntervalAR => [r.start, r.end];
 
-const getType = (r: interval | interval[]): string => {
+const getType = (r: interval | ReadonlyArray<interval>): string => {
   const inter = Array.isArray(r) ? r[0] : r;
   if (typeof inter === 'number' || Array.isArray(inter)) {
     return 'IntervalAR';
@@ -69,9 +69,9 @@ const convertTo = <T extends interval>(typeStr: string) => (r: IntervalSE): T =>
   }
 };
 
-const prepareInput = (typeStr: string, i: interval | interval[]): IntervalSE[] => {
+const prepareInput = (typeStr: string, i: interval | roai): IntervalSE[] => {
   if (Array.isArray(i) && typeof i[0] !== 'number') {
-    return (i as interval[]).map(convertFrom(typeStr));
+    return (i as any[]).map(convertFrom(typeStr)); // See TS issue: #17002 & #19892
   }
   return [convertFrom(typeStr)(i as interval)];
 };
@@ -115,9 +115,9 @@ const complementCurry = <T extends interval>(boundaries: interval, intervals: T 
  * @param intervals arg2: one interval or array of intervals that complement the result.
  * @returns array of intervals.
  */
-export function complement<T extends interval>(boundaries: interval, interv: T | T[]): T[];
-export function complement<T extends interval>(boundaries: interval): (interv: T | T[]) => T[];
-export function complement<T extends interval>(boundaries: interval, interv?: T | T[]): any {
+export function complement<T extends interval>(boundaries: interval, interv: T | roat<T>): T[];
+export function complement<T extends interval>(boundaries: interval): (interv: T | roat<T>) => T[];
+export function complement<T extends interval>(boundaries: interval, interv?: T | roat<T>): any {
   switch (arguments.length) {
     case 1:
       return (tt2: T | T[]): T[] => {
@@ -129,8 +129,8 @@ export function complement<T extends interval>(boundaries: interval, interv?: T 
 }
 
 const setupForTwoInts = <T extends interval>(
-  interval1: T | T[],
-  interval2: T | T[]
+  interval1: T | roat<T>,
+  interval2: T | roat<T>
 ): [string, IntervalSE[], IntervalSE[]] => {
   const typeStr = getType(interval1);
   return [typeStr, prepareInput(typeStr, interval1), prepareInput(typeStr, interval2)];
@@ -138,14 +138,14 @@ const setupForTwoInts = <T extends interval>(
 
 const setupForTwoIntsToInts = <T extends interval>(
   fn: (i1: IntervalSE[], i2: IntervalSE[]) => IntervalSE[]
-) => (interval1: T | T[], interval2: T | T[]): T[] => {
+) => (interval1: T | roat<T>, interval2: T | roat<T>): T[] => {
   const [typeStr, arg1, arg2] = setupForTwoInts(interval1, interval2);
   return fn(arg1, arg2).map(convertTo<T>(typeStr));
 };
 
 const setupForTwoIntsToBool = <T extends interval>(fn: twoIntsToBoolFn) => (
-  interval1: T | T[],
-  interval2: T | T[]
+  interval1: T | roat<T>,
+  interval2: T | roat<T>
 ): boolean => {
   const [, arg1, arg2] = setupForTwoInts(interval1, interval2);
   return fn(arg1, arg2);
@@ -181,8 +181,8 @@ const isOverlappingGen = (intervalsA: IntervalSE[], intervalsB: IntervalSE[]): b
 
 const curryBool = <T extends interval>(
   argLength: number,
-  arg1: T | T[],
-  arg2: T | T[] | undefined,
+  arg1: T | roat<T>,
+  arg2: T | roat<T> | undefined,
   fn: twoIntsToBoolFn
 ): any => {
   switch (argLength) {
@@ -210,11 +210,17 @@ const curryBool = <T extends interval>(
  * @param intervalB arg2: interval or array of intervals
  * @returns true if overlaps
  */
-export function isOverlapping<T extends interval>(intervalA: T | T[], intervalB: T | T[]): boolean;
 export function isOverlapping<T extends interval>(
-  intervalA: T | T[]
-): (intervalB: T | T[]) => boolean;
-export function isOverlapping<T extends interval>(intervalA: T | T[], intervalB?: T | T[]): any {
+  intervalA: T | roat<T>,
+  intervalB: T | roat<T>
+): boolean;
+export function isOverlapping<T extends interval>(
+  intervalA: T | roat<T>
+): (intervalB: T | roat<T>) => boolean;
+export function isOverlapping<T extends interval>(
+  intervalA: T | roat<T>,
+  intervalB?: T | roat<T>
+): any {
   return curryBool<T>(arguments.length, intervalA, intervalB, isOverlappingGen);
 }
 
@@ -418,9 +424,9 @@ const unifyGen = pipe(
  * @param intervalB arg2: one interval or array of intervals
  * @returns union of `arg1` and `arg2`
  */
-export function unify<T extends interval>(intervalA: T | T[], intervalB: T | T[]): T[];
-export function unify<T extends interval>(intervalA: T | T[]): (intervalB: T | T[]) => T[];
-export function unify<T extends interval>(intervalA: T | T[], intervalB?: T | T[]): any {
+export function unify<T extends interval>(intervalA: T | roat<T>, intervalB: T | roat<T>): T[];
+export function unify<T extends interval>(intervalA: T | roat<T>): (intervalB: T | roat<T>) => T[];
+export function unify<T extends interval>(intervalA: T | roat<T>, intervalB?: T | roat<T>): any {
   switch (arguments.length) {
     case 1:
       return (tt2: T | T[]): T[] => {
@@ -488,9 +494,14 @@ const intersectGen = (intervalsA: IntervalSE[], intervalsB: IntervalSE[]): Inter
  * @param intervalB arg2: one interval or array of intervals
  * @returns intersection of `arg1` and `arg2`
  */
-export function intersect<T extends interval>(intervalA: T | T[], intervalB: T | T[]): T[];
-export function intersect<T extends interval>(intervalA: T | T[]): (intervalB: T | T[]) => T[];
-export function intersect<T extends interval>(intervalA: T | T[], intervalB?: T | T[]): any {
+export function intersect<T extends interval>(intervalA: T | roat<T>, intervalB: T | roat<T>): T[];
+export function intersect<T extends interval>(
+  intervalA: T | roat<T>
+): (intervalB: T | roat<T>) => T[];
+export function intersect<T extends interval>(
+  intervalA: T | roat<T>,
+  intervalB?: T | roat<T>
+): any {
   switch (arguments.length) {
     case 1:
       return (tt2: T | T[]): T[] => {
@@ -526,9 +537,14 @@ const substractGen = (base: IntervalSE[], mask: IntervalSE[]): IntervalSE[] => {
  * @param intervalB arg2: one interval or array of intervals
  * @returns intersection of `arg1` and `arg2`
  */
-export function substract<T extends interval>(intervalA: T | T[], intervalB: T | T[]): T[];
-export function substract<T extends interval>(intervalA: T | T[]): (intervalB: T | T[]) => T[];
-export function substract<T extends interval>(intervalA: T | T[], intervalB?: T | T[]): any {
+export function substract<T extends interval>(intervalA: T | roat<T>, intervalB: T | roat<T>): T[];
+export function substract<T extends interval>(
+  intervalA: T | roat<T>
+): (intervalB: T | roat<T>) => T[];
+export function substract<T extends interval>(
+  intervalA: T | roat<T>,
+  intervalB?: T | roat<T>
+): any {
   switch (arguments.length) {
     case 1:
       return (tt2: T | T[]): T[] => {
