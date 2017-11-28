@@ -4,6 +4,7 @@ import {
   applySpec,
   concat,
   converge,
+  dissoc,
   drop,
   dropWhile,
   either,
@@ -28,6 +29,10 @@ type twoIntsToBoolFn = (i1: IntervalSE[], i2: IntervalSE[]) => boolean;
 
 const sortByStart = sortBy<IntervalSE>(prop('start'));
 
+const dissocMany = (...props: string[]) => {
+  return pipe.apply(null, props.map(p => dissoc(p))); // Workaround for TS issue #4130
+};
+
 const convertFrom = (typeStr: string) => (r: interval): IntervalSE => {
   switch (typeStr) {
     case 'IntervalFT':
@@ -39,9 +44,11 @@ const convertFrom = (typeStr: string) => (r: interval): IntervalSE => {
   }
 };
 
-const convertFTtoSE = (r: IntervalFT): IntervalSE => ({ start: r.from, end: r.to });
+const convertFTtoSE = (r: IntervalFT): IntervalSE =>
+  dissocMany('from', 'to')({ ...r, start: r.from, end: r.to });
 const convertARtoSE = ([start, end]: IntervalAR): IntervalSE => ({ start, end });
-const convertSEtoFT = (r: IntervalSE): IntervalFT => ({ from: r.start, to: r.end });
+const convertSEtoFT = (r: IntervalSE): IntervalFT =>
+  dissocMany('start', 'end')({ ...r, from: r.start, to: r.end });
 const convertSEtoAR = (r: IntervalSE): IntervalAR => [r.start, r.end];
 
 const getType = (r: interval | ReadonlyArray<interval>): string => {
@@ -463,6 +470,7 @@ const intersectUnfolder = (
   }
   const inter2 = newInters2[0];
   const minMaxInter = {
+    ...inter2,
     end: Math.min(inter1.end, inter2.end),
     start: Math.max(inter1.start, inter2.start),
   };
@@ -481,13 +489,14 @@ const intersectGen = (intervalsA: IntervalSE[], intervalsB: IntervalSE[]): Inter
 };
 
 /**
- * Intersection of `intervals`.
+ * Intersection of `intervals`. Does not simplify result. Keeps extra object properties on `intervalB`.
  *
  * Curried function. Accept array of intervals. Doesn't mutate input. Output keeps input's structure.
  *
  * interval(s) A | interval(s) B | result
  * --- | --- | ---
- * { start: 0, end: 4 } | { start: 3, end: 7 } | [{ start: 3, end: 4 }]
+ * { start: 0, end: 4 } | { start: 3, end: 7, foo: 'bar' } | [{ start: 3, end: 4, foo: 'bar' }]
+ * { start: 0, end: 10 } | [{ start: 2, end: 5}, { start: 5, end: 8}] | [{ start: 2, end: 5 }, { start: 5, end: 8 }]
  * [{ start: 0, end: 4 }, { start: 8, end: 11 }] | [{ start: 2, end: 9 }, { start: 10, end: 13 }] | [{ start: 2, end: 4 }, { start: 8, end: 9 }, { start: 10, end: 11 }]
  *
  * @param intervalA arg1: one interval or array of intervals
