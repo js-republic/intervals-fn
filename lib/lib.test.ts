@@ -260,6 +260,16 @@ test('will unify two arrays', t => {
   testFnToIntervals(i1, i2, unify, testOutputFn, t);
 });
 
+test('unify will simplify arrays', t => {
+  const i1 = [{ start: 1, end: 4 }, { start: 7, end: 9 }];
+  const i2 = [{ start: 3, end: 8 }];
+  const testOutputFn = (res: IntervalSE[]): void => {
+    t.true(res.length === 1);
+    t.true(res[0].start === 1 && res[0].end === 9);
+  };
+  testFnToIntervals(i1, i2, unify, testOutputFn, t);
+});
+
 test('will intersect an array with an interval', t => {
   const r1 = [{ start: 0, end: 5 }, { start: 7, end: 9 }, { start: 11, end: 15 }];
   const r2 = { start: 3, end: 8 };

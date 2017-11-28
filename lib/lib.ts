@@ -496,13 +496,14 @@ const intersectGen = (intervalsA: IntervalSE[], intervalsB: IntervalSE[]): Inter
 };
 
 /**
- * Intersection of `intervals`.
+ * Intersection of `intervals`. Does not simplify result. Keeps extra object properties on `intervalB`.
  *
  * Curried function. Accept array of intervals. Doesn't mutate input. Output keeps input's structure.
  *
  * interval(s) A | interval(s) B | result
  * --- | --- | ---
- * { start: 0, end: 4 } | { start: 3, end: 7 } | [{ start: 3, end: 4 }]
+ * { start: 0, end: 4 } | { start: 3, end: 7, foo: 'bar' } | [{ start: 3, end: 4, foo: 'bar' }]
+ * { start: 0, end: 10 } | [{ start: 2, end: 5}, { start: 5, end: 8}] | [{ start: 2, end: 5 }, { start: 5, end: 8 }]
  * [{ start: 0, end: 4 }, { start: 8, end: 11 }] | [{ start: 2, end: 9 }, { start: 10, end: 13 }] | [{ start: 2, end: 4 }, { start: 8, end: 9 }, { start: 10, end: 11 }]
  *
  * @param intervalA arg1: one interval or array of intervals
