@@ -477,6 +477,7 @@ const intersectUnfolder = (
   }
   const inter2 = newInters2[0];
   const minMaxInter = {
+    ...inter2,
     end: Math.min(inter1.end, inter2.end),
     start: Math.max(inter1.start, inter2.start),
   };

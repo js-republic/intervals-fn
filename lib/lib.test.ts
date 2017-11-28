@@ -328,7 +328,7 @@ test('will intersect an interval and an array', t => {
   testFnToIntervals(r1, r2, intersect, testOutputFn, t);
 });
 
-test('will not simplify', t => {
+test('intersection will not simplify', t => {
   const r1 = [{ start: 1, end: 5 }];
   const r2 = [{ start: 1, end: 2 }, { start: 2, end: 5 }];
   const testOutputFn = (res: IntervalSE[]): void => {
@@ -338,4 +338,22 @@ test('will not simplify', t => {
   };
   testFnToIntervals(r1, r2, intersect, testOutputFn, t);
   testFnToIntervals(r2, r1, intersect, testOutputFn, t);
+});
+
+test('intersection will keep object properties', t => {
+  const r1 = [{ start: 1, end: 5, test: 'foo' }];
+  const r2 = [{ start: 1, end: 2, test: 'bar' }, { start: 2, end: 5, test: 'baz' }];
+  const res = intersect(r1, r2);
+  t.true(res.length === 2);
+  t.true(res[0].test === 'bar');
+  t.true(res[1].test === 'baz');
+});
+
+test('intersection will keep object properties when truncated', t => {
+  const r1 = [{ start: 2, end: 5, test: 'foo' }, { start: 13, end: 16, test: 'foobar' }];
+  const r2 = [{ start: 1, end: 8, test: 'bar' }, { start: 12, end: 15, test: 'baz' }];
+  const res = intersect(r1, r2);
+  t.true(res.length === 2);
+  t.true(res[0].test === 'bar');
+  t.true(res[1].test === 'baz');
 });
