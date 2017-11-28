@@ -4,11 +4,13 @@ import {
   applySpec,
   concat,
   converge,
+  dissoc,
   drop,
   dropWhile,
   either,
   groupWith,
   head,
+  identity,
   isEmpty,
   isNil,
   last,
@@ -28,6 +30,16 @@ type twoIntsToBoolFn = (i1: IntervalSE[], i2: IntervalSE[]) => boolean;
 
 const sortByStart = sortBy<IntervalSE>(prop('start'));
 
+const dissocMany = (...props: string[]) => {
+  if (props.length === 0) {
+    return identity;
+  }
+  if (props.length === 1) {
+    return dissoc(props[0]);
+  }
+  return pipe.apply(null, props.map(p => dissoc(p))); // Workaround for TS issue #4130
+};
+
 const convertFrom = (typeStr: string) => (r: interval): IntervalSE => {
   switch (typeStr) {
     case 'IntervalFT':
@@ -39,9 +51,11 @@ const convertFrom = (typeStr: string) => (r: interval): IntervalSE => {
   }
 };
 
-const convertFTtoSE = (r: IntervalFT): IntervalSE => ({ start: r.from, end: r.to });
+const convertFTtoSE = (r: IntervalFT): IntervalSE =>
+  dissocMany('from', 'to')({ ...r, start: r.from, end: r.to });
 const convertARtoSE = ([start, end]: IntervalAR): IntervalSE => ({ start, end });
-const convertSEtoFT = (r: IntervalSE): IntervalFT => ({ from: r.start, to: r.end });
+const convertSEtoFT = (r: IntervalSE): IntervalFT =>
+  dissocMany('start', 'end')({ ...r, from: r.start, to: r.end });
 const convertSEtoAR = (r: IntervalSE): IntervalAR => [r.start, r.end];
 
 const getType = (r: interval | ReadonlyArray<interval>): string => {

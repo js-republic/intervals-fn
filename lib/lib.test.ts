@@ -327,3 +327,15 @@ test('will intersect an interval and an array', t => {
   };
   testFnToIntervals(r1, r2, intersect, testOutputFn, t);
 });
+
+test('will not simplify', t => {
+  const r1 = [{ start: 1, end: 5 }];
+  const r2 = [{ start: 1, end: 2 }, { start: 2, end: 5 }];
+  const testOutputFn = (res: IntervalSE[]): void => {
+    t.true(res.length === 2);
+    t.true(res[0].start === 1 && res[0].end === 2);
+    t.true(res[1].start === 2 && res[1].end === 5);
+  };
+  testFnToIntervals(r1, r2, intersect, testOutputFn, t);
+  testFnToIntervals(r2, r1, intersect, testOutputFn, t);
+});
