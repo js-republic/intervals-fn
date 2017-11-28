@@ -10,7 +10,6 @@ import {
   either,
   groupWith,
   head,
-  identity,
   isEmpty,
   isNil,
   last,
@@ -31,12 +30,6 @@ type twoIntsToBoolFn = (i1: IntervalSE[], i2: IntervalSE[]) => boolean;
 const sortByStart = sortBy<IntervalSE>(prop('start'));
 
 const dissocMany = (...props: string[]) => {
-  if (props.length === 0) {
-    return identity;
-  }
-  if (props.length === 1) {
-    return dissoc(props[0]);
-  }
   return pipe.apply(null, props.map(p => dissoc(p))); // Workaround for TS issue #4130
 };
 
