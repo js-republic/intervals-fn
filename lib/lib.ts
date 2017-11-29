@@ -158,6 +158,16 @@ const setupForTwoIntsToInts = <T extends interval>(
   return fn(arg1, arg2).map(convertTo<T>(typeStr));
 };
 
+const setupForOneIOneTToInts = <T extends interval>(
+  fn: (i1: IntervalSE[], i2: IntervalSE[]) => IntervalSE[]
+) => (interval1: interval | roat<interval>, interval2: T | roat<T>): T[] => {
+  const typeStr1 = getType(interval1);
+  const typeStr2 = getType(interval2);
+  return fn(prepareInput(typeStr1, interval1), prepareInput(typeStr2, interval2)).map(
+    convertTo<T>(typeStr2)
+  );
+};
+
 const setupForTwoIntsToBool = <T extends interval>(fn: twoIntsToBoolFn) => (
   interval1: T | roat<T>,
   interval2: T | roat<T>
@@ -518,11 +528,12 @@ const intersectGen = (intervalsA: IntervalSE[], intervalsB: IntervalSE[]): Inter
 /**
  * Intersection of `intervals`. Does not simplify result. Keeps extra object properties on `intervalB`.
  *
- * Curried function. Accept array of intervals. Doesn't mutate input. Output keeps input's structure.
+ * `interalA` and `interalB` can have different structure.
+ * Curried function. Accept array of intervals. Doesn't mutate input. Output keeps `intervalB` structure.
  *
  * interval(s) A | interval(s) B | result
  * --- | --- | ---
- * { start: 0, end: 4 } | { start: 3, end: 7, foo: 'bar' } | [{ start: 3, end: 4, foo: 'bar' }]
+ * { from: 0, to: 4 } | { start: 3, end: 7, foo: 'bar' } | [{ start: 3, end: 4, foo: 'bar' }]
  * { start: 0, end: 10 } | [{ start: 2, end: 5}, { start: 5, end: 8}] | [{ start: 2, end: 5 }, { start: 5, end: 8 }]
  * [{ start: 0, end: 4 }, { start: 8, end: 11 }] | [{ start: 2, end: 9 }, { start: 10, end: 13 }] | [{ start: 2, end: 4 }, { start: 8, end: 9 }, { start: 10, end: 11 }]
  *
@@ -530,21 +541,24 @@ const intersectGen = (intervalsA: IntervalSE[], intervalsB: IntervalSE[]): Inter
  * @param intervalB arg2: one interval or array of intervals
  * @returns intersection of `arg1` and `arg2`
  */
-export function intersect<T extends interval>(intervalA: T | roat<T>, intervalB: T | roat<T>): T[];
 export function intersect<T extends interval>(
-  intervalA: T | roat<T>
+  intervalA: interval | roat<interval>,
+  intervalB: T | roat<T>
+): T[];
+export function intersect<T extends interval>(
+  intervalA: interval | roat<interval>
 ): (intervalB: T | roat<T>) => T[];
 export function intersect<T extends interval>(
-  intervalA: T | roat<T>,
+  intervalA: interval | roat<interval>,
   intervalB?: T | roat<T>
 ): any {
   switch (arguments.length) {
     case 1:
       return (tt2: T | T[]): T[] => {
-        return setupForTwoIntsToInts<T>(intersectGen)(intervalA, tt2);
+        return setupForOneIOneTToInts<T>(intersectGen)(intervalA, tt2);
       };
     case 2:
-      return setupForTwoIntsToInts<T>(intersectGen)(intervalA, intervalB as T | T[]);
+      return setupForOneIOneTToInts<T>(intersectGen)(intervalA, intervalB as T | T[]);
   }
 }
 
