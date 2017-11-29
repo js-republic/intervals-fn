@@ -143,6 +143,14 @@ const setupForTwoInts = <T extends interval>(
   return [typeStr, prepareInput(typeStr, interval1), prepareInput(typeStr, interval2)];
 };
 
+const setupForOneIntsToInts = <T extends interval>(fn: (i1: IntervalSE[]) => IntervalSE[]) => (
+  interval1: roat<T>
+): T[] => {
+  const typeStr = getType(interval1);
+  const arg1 = prepareInput(typeStr, interval1);
+  return fn(arg1).map(convertTo<T>(typeStr));
+};
+
 const setupForTwoIntsToInts = <T extends interval>(
   fn: (i1: IntervalSE[], i2: IntervalSE[]) => IntervalSE[]
 ) => (interval1: T | roat<T>, interval2: T | roat<T>): T[] => {
@@ -405,8 +413,7 @@ export function isEqual<T extends interval>(intervalA: T, intervalB?: T): any {
 
 const propFromNthArg = (n: number, propName: string) => pipe(nthArg(n), prop(propName));
 
-const unifyGen = pipe(
-  concat as (a: IntervalSE[], b: IntervalSE[]) => IntervalSE[],
+const simplifyGen = pipe(
   sortByStart,
   groupWith(either(isOverlappingSimple, isMeetingSimple)),
   map(
@@ -415,6 +422,26 @@ const unifyGen = pipe(
       [head, last]
     )
   )
+) as (a: IntervalSE[]) => IntervalSE[];
+
+/**
+ * Simplification of `intervals`. Unify touching or overlapping intervals.
+ *
+ * Doesn't mutate input. Output keeps input's structure.
+ *
+ * | intervals A | result |
+ * | ----------- | ------ |
+ * | [{ start: 3, end: 9 }, { start: 9, end: 13 }, { start: 11, end: 14 }] | [{ start: 3, end: 14 }] |
+ *
+ * @param intervalA
+ */
+export function simplify<T extends interval>(intervalA: roat<T>): T[] {
+  return setupForOneIntsToInts<T>(simplifyGen)(intervalA);
+}
+
+const unifyGen = pipe(
+  concat as (a: IntervalSE[], b: IntervalSE[]) => IntervalSE[],
+  simplifyGen
 ) as (a: IntervalSE[], b: IntervalSE[]) => IntervalSE[];
 
 /**

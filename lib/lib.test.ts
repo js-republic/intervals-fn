@@ -12,6 +12,7 @@ import {
   isMeeting,
   isOverlapping,
   isStarting,
+  simplify,
   substract,
   unify,
 } from './lib';
@@ -68,6 +69,15 @@ const testFnToIntervals = (
   testOutputFn(prepareOutput(res3, convertARtoSE));
   t.throws(fn.bind(null, [{ test: 1 }], { test: 1 }), 'Unrecognized interval format');
 };
+
+test('will simplify', t => {
+  const i1 = [{ start: 0, end: 2 }, { start: 2, end: 10 }];
+  const i2 = [[0, 8], [2, 10]] as Array<[number, number]>;
+  const res1 = simplify(i1);
+  const res2 = simplify(i2);
+  t.true(res1.length === 1 && res1[0].start === 0 && res1[0].end === 10);
+  t.true(res2.length === 1 && res2[0][0] === 0 && res2[0][1] === 10);
+});
 
 test('will find equal', t => {
   const i1 = { start: 0, end: 42 };

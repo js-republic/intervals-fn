@@ -13,6 +13,8 @@
 ## What's in the box
 
 All function are curried. Output keeps the input's structure and type. No input mutation.
+### Unary operation
+* Simplify
 ### Binary operations
 * Intersection *
 * Union *
