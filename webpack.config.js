@@ -2,12 +2,15 @@ const webpack = require('webpack');
 const path = require('path');
 const nodeEnv = process.env.NODE_ENV || 'development';
 const isProd = nodeEnv === 'production';
+const libName = 'intervals-fn';
 
 const config = {
   entry: './lib/lib.ts',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'index.bundle.js',
+    library: 'intervals-fn',
+    libraryTarget: 'umd',
   },
   resolve: {
     extensions: ['.js', '.ts', '.json'],
