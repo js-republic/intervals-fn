@@ -10,6 +10,7 @@ import {
   either,
   groupWith,
   head,
+  identity,
   isEmpty,
   isNil,
   last,
@@ -56,7 +57,7 @@ const getType = (r: interval | ReadonlyArray<interval>): string => {
   if (typeof inter === 'number' || Array.isArray(inter)) {
     return 'IntervalAR';
   }
-  if (inter.hasOwnProperty('start')) {
+  if (inter == null || inter.hasOwnProperty('start')) {
     return 'IntervalSE';
   }
   if (inter.hasOwnProperty('from')) {
@@ -135,13 +136,15 @@ export function complement<T extends interval>(boundaries: interval, interv?: T 
   }
 }
 
-const setupForTwoInts = <T extends interval>(
+const setupForTwoIntsOneType = <T extends interval>(
   interval1: T | roat<T>,
   interval2: T | roat<T>
 ): [string, IntervalSE[], IntervalSE[]] => {
   const typeStr = getType(interval1);
   return [typeStr, prepareInput(typeStr, interval1), prepareInput(typeStr, interval2)];
 };
+
+const setupOneType = converge(prepareInput, [getType, identity]);
 
 const setupForOneIntsToInts = <T extends interval>(fn: (i1: IntervalSE[]) => IntervalSE[]) => (
   interval1: roat<T>
@@ -154,7 +157,7 @@ const setupForOneIntsToInts = <T extends interval>(fn: (i1: IntervalSE[]) => Int
 const setupForTwoIntsToInts = <T extends interval>(
   fn: (i1: IntervalSE[], i2: IntervalSE[]) => IntervalSE[]
 ) => (interval1: T | roat<T>, interval2: T | roat<T>): T[] => {
-  const [typeStr, arg1, arg2] = setupForTwoInts(interval1, interval2);
+  const [typeStr, arg1, arg2] = setupForTwoIntsOneType(interval1, interval2);
   return fn(arg1, arg2).map(convertTo<T>(typeStr));
 };
 
@@ -168,12 +171,11 @@ const setupForOneIOneTToInts = <T extends interval>(
   );
 };
 
-const setupForTwoIntsToBool = <T extends interval>(fn: twoIntsToBoolFn) => (
-  interval1: T | roat<T>,
-  interval2: T | roat<T>
+const setupForTwoIntsToBool = (fn: twoIntsToBoolFn) => (
+  interval1: interval | roat<interval>,
+  interval2: interval | roat<interval>
 ): boolean => {
-  const [, arg1, arg2] = setupForTwoInts(interval1, interval2);
-  return fn(arg1, arg2);
+  return fn.apply(null, [interval1, interval2].map(setupOneType));
 };
 
 const isOverlappingSimple = (a: IntervalSE, b: IntervalSE): boolean => {
@@ -204,19 +206,19 @@ const isOverlappingGen = (intervalsA: IntervalSE[], intervalsB: IntervalSE[]): b
   return isOverlappingRec(intervalsAS, intervalsBS);
 };
 
-const curryBool = <T extends interval>(
+const curryBool = (
   argLength: number,
-  arg1: T | roat<T>,
-  arg2: T | roat<T> | undefined,
+  arg1: interval | roat<interval>,
+  arg2: interval | roat<interval> | undefined,
   fn: twoIntsToBoolFn
 ): any => {
   switch (argLength) {
     case 1:
-      return (tt2: T | T[]): boolean => {
-        return setupForTwoIntsToBool<T>(fn)(arg1, tt2);
+      return (tt2: interval | interval[]): boolean => {
+        return setupForTwoIntsToBool(fn)(arg1, tt2);
       };
     case 2:
-      return setupForTwoIntsToBool<T>(fn)(arg1, arg2 as T | T[]);
+      return setupForTwoIntsToBool(fn)(arg1, arg2 as interval | interval[]);
   }
 };
 
@@ -235,18 +237,18 @@ const curryBool = <T extends interval>(
  * @param intervalB arg2: interval or array of intervals
  * @returns true if overlaps
  */
-export function isOverlapping<T extends interval>(
-  intervalA: T | roat<T>,
-  intervalB: T | roat<T>
+export function isOverlapping(
+  intervalA: interval | roat<interval>,
+  intervalB: interval | roat<interval>
 ): boolean;
-export function isOverlapping<T extends interval>(
-  intervalA: T | roat<T>
-): (intervalB: T | roat<T>) => boolean;
-export function isOverlapping<T extends interval>(
-  intervalA: T | roat<T>,
-  intervalB?: T | roat<T>
+export function isOverlapping(
+  intervalA: interval | roat<interval>
+): (intervalB: interval | roat<interval>) => boolean;
+export function isOverlapping(
+  intervalA: interval | roat<interval>,
+  intervalB?: interval | roat<interval>
 ): any {
-  return curryBool<T>(arguments.length, intervalA, intervalB, isOverlappingGen);
+  return curryBool(arguments.length, intervalA, intervalB, isOverlappingGen);
 }
 
 const isMeetingSimple = (a: IntervalSE, b: IntervalSE): boolean => {
@@ -270,10 +272,10 @@ const isMeetingGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
  * @param intervalB arg2: interval
  * @returns true if adjacent
  */
-export function isMeeting<T extends interval>(intervalA: T, intervalB: T): boolean;
-export function isMeeting<T extends interval>(intervalA: T): (intervalB: T) => boolean;
-export function isMeeting<T extends interval>(intervalA: T, intervalB?: T): any {
-  return curryBool<T>(arguments.length, intervalA, intervalB, isMeetingGen);
+export function isMeeting(intervalA: interval, intervalB: interval): boolean;
+export function isMeeting(intervalA: interval): (intervalB: interval) => boolean;
+export function isMeeting(intervalA: interval, intervalB?: interval): any {
+  return curryBool(arguments.length, intervalA, intervalB, isMeetingGen);
 }
 
 const isBeforeGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
@@ -294,10 +296,10 @@ const isBeforeGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
  * @param intervalB arg2: interval
  * @returns true if before
  */
-export function isBefore<T extends interval>(intervalA: T, intervalB: T): boolean;
-export function isBefore<T extends interval>(intervalA: T): (intervalB: T) => boolean;
-export function isBefore<T extends interval>(intervalA: T, intervalB?: T): any {
-  return curryBool<T>(arguments.length, intervalA, intervalB, isBeforeGen);
+export function isBefore(intervalA: interval, intervalB: interval): boolean;
+export function isBefore(intervalA: interval): (intervalB: interval) => boolean;
+export function isBefore(intervalA: interval, intervalB?: interval): any {
+  return curryBool(arguments.length, intervalA, intervalB, isBeforeGen);
 }
 
 const isAfterGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
@@ -318,10 +320,10 @@ const isAfterGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
  * @param intervalB arg2: interval
  * @returns true if after
  */
-export function isAfter<T extends interval>(intervalA: T, intervalB: T): boolean;
-export function isAfter<T extends interval>(intervalA: T): (intervalB: T) => boolean;
-export function isAfter<T extends interval>(intervalA: T, intervalB?: T): any {
-  return curryBool<T>(arguments.length, intervalA, intervalB, isAfterGen);
+export function isAfter(intervalA: interval, intervalB: interval): boolean;
+export function isAfter(intervalA: interval): (intervalB: interval) => boolean;
+export function isAfter(intervalA: interval, intervalB?: interval): any {
+  return curryBool(arguments.length, intervalA, intervalB, isAfterGen);
 }
 
 const isStartingGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
@@ -342,10 +344,10 @@ const isStartingGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
  * @param intervalB arg2: interval
  * @returns true if same starting point
  */
-export function isStarting<T extends interval>(intervalA: T, intervalB: T): boolean;
-export function isStarting<T extends interval>(intervalA: T): (intervalB: T) => boolean;
-export function isStarting<T extends interval>(intervalA: T, intervalB?: T): any {
-  return curryBool<T>(arguments.length, intervalA, intervalB, isStartingGen);
+export function isStarting(intervalA: interval, intervalB: interval): boolean;
+export function isStarting(intervalA: interval): (intervalB: interval) => boolean;
+export function isStarting(intervalA: interval, intervalB?: interval): any {
+  return curryBool(arguments.length, intervalA, intervalB, isStartingGen);
 }
 
 const isEndingGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
@@ -366,10 +368,10 @@ const isEndingGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
  * @param intervalB arg2: interval
  * @returns true if same ending point
  */
-export function isEnding<T extends interval>(intervalA: T, intervalB: T): boolean;
-export function isEnding<T extends interval>(intervalA: T): (intervalB: T) => boolean;
-export function isEnding<T extends interval>(intervalA: T, intervalB?: T): any {
-  return curryBool<T>(arguments.length, intervalA, intervalB, isEndingGen);
+export function isEnding(intervalA: interval, intervalB: interval): boolean;
+export function isEnding(intervalA: interval): (intervalB: interval) => boolean;
+export function isEnding(intervalA: interval, intervalB?: interval): any {
+  return curryBool(arguments.length, intervalA, intervalB, isEndingGen);
 }
 
 const isDuringGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
@@ -391,10 +393,10 @@ const isDuringGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
  * @param intervalB arg2: interval
  * @returns true if `intervalA` occurs in `intervalB`
  */
-export function isDuring<T extends interval>(intervalA: T, intervalB: T): boolean;
-export function isDuring<T extends interval>(intervalA: T): (intervalB: T) => boolean;
-export function isDuring<T extends interval>(intervalA: T, intervalB?: T): any {
-  return curryBool<T>(arguments.length, intervalA, intervalB, isDuringGen);
+export function isDuring(intervalA: interval, intervalB: interval): boolean;
+export function isDuring(intervalA: interval): (intervalB: interval) => boolean;
+export function isDuring(intervalA: interval, intervalB?: interval): any {
+  return curryBool(arguments.length, intervalA, intervalB, isDuringGen);
 }
 
 const isEqualGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
@@ -415,10 +417,10 @@ const isEqualGen = ([a]: IntervalSE[], [b]: IntervalSE[]): boolean => {
  * @param intervalB arg2: interval
  * @returns true if equivalent
  */
-export function isEqual<T extends interval>(intervalA: T, intervalB: T): boolean;
-export function isEqual<T extends interval>(intervalA: T): (intervalB: T) => boolean;
-export function isEqual<T extends interval>(intervalA: T, intervalB?: T): any {
-  return curryBool<T>(arguments.length, intervalA, intervalB, isEqualGen);
+export function isEqual(intervalA: interval, intervalB: interval): boolean;
+export function isEqual(intervalA: interval): (intervalB: interval) => boolean;
+export function isEqual(intervalA: interval, intervalB?: interval): any {
+  return curryBool(arguments.length, intervalA, intervalB, isEqualGen);
 }
 
 const propFromNthArg = (n: number, propName: string) => pipe(nthArg(n), prop(propName));
