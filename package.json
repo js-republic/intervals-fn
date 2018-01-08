@@ -11,12 +11,10 @@
     "build": "webpack",
     "doc": "npm run build && typedoc --out docs/ dist/",
     "prepublish": "npm run build",
-    "semantic-release":
-      "semantic-release pre && npm publish && semantic-release post",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "watch:ts": "tsc -w",
     "watch:ava": "ava -w build/*.test.js",
-    "watch:test":
-      "concurrently -k -p \"[{name}]\" -n \"TypeScript,Ava\" -c \"blue.bold,magenta.bold\" \"npm run watch:ts\" \"npm run watch:ava\""
+    "watch:test": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Ava\" -c \"blue.bold,magenta.bold\" \"npm run watch:ts\" \"npm run watch:ava\""
   },
   "repository": {
     "type": "git",
