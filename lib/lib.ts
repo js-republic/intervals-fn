@@ -13,7 +13,6 @@ import {
   identity,
   isEmpty,
   isNil,
-  last,
   map,
   nthArg,
   pipe,
@@ -424,6 +423,7 @@ export function isEqual(intervalA: interval, intervalB?: interval): any {
 }
 
 const propFromNthArg = (n: number, propName: string) => pipe(nthArg(n), prop(propName));
+const maxEnd = (ranges: IntervalSE[]) => ranges.reduce((a, b) => a.end > b.end ? a : b);
 
 const simplifyGen = pipe(
   sortByStart,
@@ -431,7 +431,7 @@ const simplifyGen = pipe(
   map(
     converge(
       applySpec<IntervalSE>({ start: propFromNthArg(0, 'start'), end: propFromNthArg(1, 'end') }),
-      [head, last]
+      [head, maxEnd]
     )
   )
 ) as (a: IntervalSE[]) => IntervalSE[];
