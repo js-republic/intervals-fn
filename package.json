@@ -11,7 +11,7 @@
     "build": "webpack",
     "doc": "npm run build && typedoc --out docs/ dist/",
     "prepublish": "npm run build",
-    "semantic-release": "semantic-release pre && npm publish && semantic-release post",
+    "semantic-release": "semantic-release",
     "watch:ts": "tsc -w",
     "watch:ava": "ava -w build/*.test.js",
     "watch:test": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Ava\" -c \"blue.bold,magenta.bold\" \"npm run watch:ts\" \"npm run watch:ava\""
@@ -22,7 +22,7 @@
   },
   "private": false,
   "publishConfig": {
-    "tag": "dev",
+    "tag": "latest",
     "access": "public"
   },
   "keywords": [
@@ -40,7 +40,7 @@
   "homepage": "https://github.com/js-republic/intervals-fn#readme",
   "dependencies": {},
   "devDependencies": {
-    "@semantic-release/release-notes-generator": "^5.0.1",
+    "@semantic-release/release-notes-generator": "^6.0.3",
     "@types/moment-range": "^3.0.4",
     "@types/ramda": "github:types/npm-ramda#dist",
     "ava": "^0.23.0",
@@ -51,7 +51,7 @@
     "nyc": "^11.3.0",
     "prettier": "^1.8.2",
     "ramda": "^0.25.0",
-    "semantic-release": "^8.2.0",
+    "semantic-release": "^11.0.2",
     "ts-loader": "^3.1.1",
     "tslint": "^5.8.0",
     "tslint-config-prettier": "^1.6.0",
@@ -63,5 +63,11 @@
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
+  },
+  "release": {
+    "publish": [
+      "@semantic-release/npm",
+      "@semantic-release/github"
+    ]
   }
 }
