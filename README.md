@@ -21,6 +21,7 @@ All function are curried. Output keeps the input's structure and type. No input 
 * Subtraction *
 ### Manipulations
 * Complement *
+* Merge
 ### Tests ([Allen's interval relations](https://en.wikipedia.org/wiki/Allen%27s_interval_algebra))
 * After
 * Before

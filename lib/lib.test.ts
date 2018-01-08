@@ -12,6 +12,7 @@ import {
   isMeeting,
   isOverlapping,
   isStarting,
+  merge,
   simplify,
   substract,
   unify,
@@ -69,6 +70,49 @@ const testFnToIntervals = (
   testOutputFn(prepareOutput(res3, convertARtoSE));
   t.throws(fn.bind(null, [{ test: 1 }], { test: 1 }), 'Unrecognized interval format');
 };
+
+interface IWithData {
+  data: number;
+}
+type SEwithData = IntervalSE & IWithData;
+type FTwithData = IntervalFT & IWithData;
+
+const reduceWithData = (a: any, b: IWithData) => ({ ...a, data: a.data + b.data });
+
+test('will merge arrays of ranges', t => {
+  const i1 = [
+    { start: 0, end: 2, data: 1 },
+    { start: 5, end: 7, data: 2 },
+    { start: 0, end: 4, data: 100 },
+    { start: 6, end: 9, data: 200 },
+  ];
+  const mergeFn = (ranges: SEwithData[]) => ranges.reduce(reduceWithData);
+  const merged = merge(mergeFn, i1);
+
+  const testOutputFn = (res: SEwithData[]): void => {
+    t.is(res.length, 5);
+    t.true(res[0].start === 0 && res[0].end === 2 && res[0].data === 101);
+    t.true(res[1].start === 2 && res[1].end === 4 && res[1].data === 100);
+    t.true(res[2].start === 5 && res[2].end === 6 && res[2].data === 2);
+    t.true(res[3].start === 6 && res[3].end === 7 && res[3].data === 202);
+    t.true(res[4].start === 7 && res[4].end === 9 && res[4].data === 200);
+  };
+  testOutputFn(merged);
+});
+
+test('will merge arrays of FT ranges', t => {
+  const i1 = [{ from: 0, to: 10, data: 5 }, { from: 4, to: 7, data: 10 }];
+  const mergeFn = (ranges: FTwithData[]) => ranges.reduce(reduceWithData);
+  const merged = merge(mergeFn)(i1);
+
+  const testOutputFn = (res: FTwithData[]): void => {
+    t.is(res.length, 3);
+    t.true(res[0].from === 0 && res[0].to === 4 && res[0].data === 5);
+    t.true(res[1].from === 4 && res[1].to === 7 && res[1].data === 15);
+    t.true(res[2].from === 7 && res[2].to === 10 && res[2].data === 5);
+  };
+  testOutputFn(merged);
+});
 
 test('will simplify', t => {
   const i1 = [{ start: 0, end: 2 }, { start: 2, end: 10 }];

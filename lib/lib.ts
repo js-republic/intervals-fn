@@ -153,6 +153,15 @@ const setupForOneIntsToInts = <T extends interval>(fn: (i1: IntervalSE[]) => Int
   return fn(arg1).map(convertTo<T>(typeStr));
 };
 
+const setupForOneIntsWithConvertToInts = <T extends interval>(
+  fn: (convert: (i: IntervalSE) => T, i1: IntervalSE[]) => IntervalSE[]
+) => (interval1: roat<T>): T[] => {
+  const typeStr = getType(interval1);
+  const arg1 = prepareInput(typeStr, interval1);
+  const converter = convertTo<T>(typeStr);
+  return fn(converter, arg1).map(converter);
+};
+
 const setupForTwoIntsToInts = <T extends interval>(
   fn: (i1: IntervalSE[], i2: IntervalSE[]) => IntervalSE[]
 ) => (interval1: T | roat<T>, interval2: T | roat<T>): T[] => {
@@ -423,7 +432,7 @@ export function isEqual(intervalA: interval, intervalB?: interval): any {
 }
 
 const propFromNthArg = (n: number, propName: string) => pipe(nthArg(n), prop(propName));
-const maxEnd = (ranges: IntervalSE[]) => ranges.reduce((a, b) => a.end > b.end ? a : b);
+const maxEnd = (ranges: IntervalSE[]) => ranges.reduce((a, b) => (a.end > b.end ? a : b));
 
 const simplifyGen = pipe(
   sortByStart,
@@ -561,6 +570,62 @@ export function intersect<T extends interval>(
       };
     case 2:
       return setupForOneIOneTToInts<T>(intersectGen)(intervalA, intervalB as T | T[]);
+  }
+}
+
+const minStart = (ranges: IntervalSE[]) => ranges.reduce((a, b) => (a.start < b.start ? a : b));
+
+const mergeUnfolder = (mergeFn: (ints: any[]) => any, convert: (int: IntervalSE) => any) => (
+  ints: IntervalSE[]
+): false | [any, IntervalSE[]] => {
+  if (!ints.length) {
+    return false;
+  }
+  const start = minStart(ints).start;
+  const withoutStart = ints
+    .filter(a => a.end > start)
+    .map(a => (a.start === start ? { ...a, start: a.end } : a));
+  const end = minStart(withoutStart).start;
+  const toMerge = ints.filter(a => isDuringGen([{ start, end }], [a])).map(convert);
+  const next = { ...mergeFn(toMerge), start, end };
+  return [
+    next,
+    ints.filter(a => a.end > end).map(a => (a.start <= end ? { ...a, start: end } : a)),
+  ];
+};
+
+const mergeGen = (mergeFn: (ints: any[]) => any) => (
+  convert: (int: IntervalSE) => any,
+  intervals: IntervalSE[]
+): IntervalSE[] => {
+  const sorted = sortByStart(intervals);
+  return unfold(mergeUnfolder(mergeFn, convert), sorted) as IntervalSE[];
+};
+
+/**
+ * Merge extra properties of all intervals inside `intervals`, when overlapping, with provided function `mergeFn`.
+ * Can also be used to generate an array of intervals without overlaps
+ *
+ * Curried function. Doesn't mutate input. Output keeps input's structure.
+ *
+ * parameter | value
+ * --- | ---
+ * mergeFn | `(a, b) => {...a, data: a.data + b.data }`
+ * intervals | `[{ start: 0, end: 10, data: 5 }, { start: 4, end: 7, data: 100 }]`
+ * result | `[{ start: 0, end: 4, data: 5 }, { start: 4, end: 7, data: 105 }, { start: 7, end: 10, data: 5 }]`
+ * @param mergeFn arg1: function to merge extra properties of overlapping intervals
+ * @param intervals arg2: intervals with extra properties.
+ */
+export function merge<T extends interval>(mergeFn: (ints: T[]) => T, intervals: roat<T>): T[];
+export function merge<T extends interval>(mergeFn: (ints: T[]) => T): (intervals: roat<T>) => T[];
+export function merge<T extends interval>(mergeFn: (ints: T[]) => T, intervals?: roat<T>): any {
+  switch (arguments.length) {
+    case 1:
+      return (ints: roat<T>): T[] => {
+        return setupForOneIntsWithConvertToInts<T>(mergeGen(mergeFn))(ints);
+      };
+    case 2:
+      return setupForOneIntsWithConvertToInts<T>(mergeGen(mergeFn))(intervals as T[]);
   }
 }
 
