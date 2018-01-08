@@ -9,7 +9,7 @@ const config = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'index.bundle.js',
-    library: 'intervals-fn',
+    library: libName,
     libraryTarget: 'umd',
   },
   resolve: {
