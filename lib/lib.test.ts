@@ -271,6 +271,16 @@ test('will substract two arrays', t => {
   testFnToIntervals(base, mask, substract, testOutputFn, t);
 });
 
+test('substract will keep extra properties from base', t => {
+  const base = [{ start: 0, end: 10, test: 'foo' }, { start: 12, end: 20, test: 'bar' }];
+  const mask = [{ start: 1, end: 3 }, { start: 8, end: 13 }, { start: 18, end: 22 }];
+  const res = substract(base, mask);
+  t.true(res.length === 3);
+  t.true(res[0].start === 0 && res[0].end === 1 && res[0].test === 'foo');
+  t.true(res[1].start === 3 && res[1].end === 8 && res[1].test === 'foo');
+  t.true(res[2].start === 13 && res[2].end === 18 && res[2].test === 'bar');
+});
+
 test('will return complement', t => {
   const intervals = [{ start: 1, end: 2 }, { start: 5, end: 7 }, { start: 6, end: 8 }];
   const boundaries = { start: 0, end: 10 };
@@ -281,6 +291,16 @@ test('will return complement', t => {
     t.true(res[2].start === 8 && res[2].end === 10);
   };
   testFnToIntervals(boundaries, intervals, complement, testOutputFn, t);
+});
+
+test('complement will keep additional properties from boundaries', t => {
+  const intervals = [{ start: 1, end: 2 }, { start: 5, end: 7 }, { start: 6, end: 8 }];
+  const boundaries = { start: 0, end: 10, test: 'foo' };
+  const res = complement(boundaries, intervals);
+  t.true(res.length === 3);
+  t.true(res[0].start === 0 && res[0].end === 1 && res[0].test === 'foo');
+  t.true(res[1].start === 2 && res[1].end === 5 && res[0].test === 'foo');
+  t.true(res[2].start === 8 && res[2].end === 10 && res[0].test === 'foo');
 });
 
 test('will return complement when boundaries are included in intervals', t => {
@@ -404,10 +424,10 @@ test('will intersect an interval and an array', t => {
 
 test('intersection will not simplify', t => {
   const r1 = [{ start: 1, end: 5 }];
-  const r2 = [{ start: 1, end: 2 }, { start: 2, end: 5 }];
+  const r2 = [{ start: 1, end: 3 }, { start: 2, end: 5 }];
   const testOutputFn = (res: IntervalSE[]): void => {
     t.true(res.length === 2);
-    t.true(res[0].start === 1 && res[0].end === 2);
+    t.true(res[0].start === 1 && res[0].end === 3);
     t.true(res[1].start === 2 && res[1].end === 5);
   };
   testFnToIntervals(r1, r2, intersect, testOutputFn, t);
@@ -430,4 +450,14 @@ test('intersection will keep object properties when truncated', t => {
   t.true(res.length === 2);
   t.true(res[0].test === 'bar');
   t.true(res[1].test === 'baz');
+});
+
+test('will trash empty interval', t => {
+  const r1 = [{ start: 0, end: 5, test: 'foo' }, { start: 8, end: 10, test: 'bar' }];
+  const r2 = { start: 6, end: 9 };
+  const res = intersect(r2, r1);
+  t.is(res.length, 1);
+  t.is(res[0].start, 8);
+  t.is(res[0].end, 9);
+  t.is(res[0].test, 'bar');
 });

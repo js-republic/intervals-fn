@@ -85,32 +85,33 @@ const prepareInput = (typeStr: string, i: interval | roai): IntervalSE[] => {
 
 const complementGen = (boundaries: IntervalSE, intervals: IntervalSE[]): IntervalSE[] => {
   const intervalsS = sortByStart(intervals);
+  const { start, end, ...rest} = boundaries;
   const prepRanges: IntervalSE[] = [
-    { start: -Infinity, end: boundaries.start },
+    { start: -Infinity, end: start },
     ...intervalsS,
-    { start: boundaries.end, end: Infinity },
+    { start: end, end: Infinity },
   ];
   return reject<IntervalSE | null>(
     isNil,
     aperture(2, prepRanges).map(
-      ([r1, r2]) => (r1.end >= r2.start ? null : { start: r1.end, end: r2.start })
+      ([r1, r2]) => (r1.end >= r2.start ? null : { start: r1.end, end: r2.start, ...rest })
     )
   ) as IntervalSE[];
 };
 
-const complementCurry = <T extends interval>(boundaries: interval, intervals: T | T[]): T[] => {
+const complementCurry = <D extends interval, T extends interval>(boundaries: D, intervals: T | T[]): D[] => {
   if (Array.isArray(intervals) && intervals.length < 1) {
-    return [boundaries] as T[];
+    return [boundaries] as D[];
   }
-  const typeStr = getType(intervals);
+  const typeStr = getType(boundaries);
   const intervalSE = prepareInput(typeStr, intervals);
   const boundariesSE = convertFrom(getType(boundaries))(boundaries);
-  return complementGen(boundariesSE, intervalSE).map(convertTo<T>(typeStr));
+  return complementGen(boundariesSE, intervalSE).map(convertTo<D>(typeStr));
 };
 
 /**
  * Complement of `intervals` bounded to `boundaries`. Convert space between two consecutive intervals into interval.
- *
+ * Keeps extra object properties on `boundaries`.
  * Curried function. Accept array of intervals. Doesn't mutate input. Output keeps input's structure.
  *
  * boundaries | interval(s) | result
@@ -122,16 +123,16 @@ const complementCurry = <T extends interval>(boundaries: interval, intervals: T 
  * @param intervals arg2: one interval or array of intervals that complement the result.
  * @returns array of intervals.
  */
-export function complement<T extends interval>(boundaries: interval, interv: T | roat<T>): T[];
-export function complement<T extends interval>(boundaries: interval): (interv: T | roat<T>) => T[];
-export function complement<T extends interval>(boundaries: interval, interv?: T | roat<T>): any {
+export function complement<D extends interval, T extends interval>(boundaries: D, interv: T | roat<T>): D[];
+export function complement<D extends interval, T extends interval>(boundaries: D): (interv: T | roat<T>) => D[];
+export function complement<D extends interval, T extends interval>(boundaries: D, interv?: T | roat<T>): any {
   switch (arguments.length) {
     case 1:
-      return (tt2: T | T[]): T[] => {
-        return complementCurry<T>(boundaries, tt2);
+      return (tt2: T | T[]): D[] => {
+        return complementCurry<D, T>(boundaries, tt2);
       };
     case 2:
-      return complementCurry<T>(boundaries, interv as T | T[]);
+      return complementCurry<D, T>(boundaries, interv as T | T[]);
   }
 }
 
@@ -634,7 +635,7 @@ const subtractInter = (mask: IntervalSE[], base: IntervalSE): IntervalSE[] => {
 };
 
 const substractGen = (base: IntervalSE[], mask: IntervalSE[]): IntervalSE[] => {
-  const intersection = intersectGen(base, mask);
+  const intersection = intersectGen(mask, base);
   return unnest(
     base.map(b => subtractInter(intersection.filter(isOverlappingSimple.bind(null, b)), b))
   );
@@ -642,6 +643,7 @@ const substractGen = (base: IntervalSE[], mask: IntervalSE[]): IntervalSE[] => {
 
 /**
  * Subtact `intervalA` with `intervalB`. `intervalB` act as a mask.
+ * Keeps extra object properties on `intervalA`.
  *
  * Curried function. Accept array of intervals. Doesn't mutate input. Output keeps input's structure.
  *
@@ -654,20 +656,20 @@ const substractGen = (base: IntervalSE[], mask: IntervalSE[]): IntervalSE[] => {
  * @param intervalB arg2: one interval or array of intervals
  * @returns intersection of `arg1` and `arg2`
  */
-export function substract<T extends interval>(intervalA: T | roat<T>, intervalB: T | roat<T>): T[];
-export function substract<T extends interval>(
-  intervalA: T | roat<T>
-): (intervalB: T | roat<T>) => T[];
-export function substract<T extends interval>(
-  intervalA: T | roat<T>,
+export function substract<D extends interval, T extends interval>(intervalA: D | roat<D>, intervalB: T | roat<T>): D[];
+export function substract<D extends interval, T extends interval>(
+  intervalA: D | roat<D>
+): (intervalB: T | roat<T>) => D[];
+export function substract<D extends interval, T extends interval>(
+  intervalA: D | roat<D>,
   intervalB?: T | roat<T>
 ): any {
   switch (arguments.length) {
     case 1:
-      return (tt2: T | T[]): T[] => {
-        return setupForTwoIntsToInts<T>(substractGen)(intervalA, tt2);
+      return (tt2: T | T[]): D[] => {
+        return setupForTwoIntsToInts<D>(substractGen)(intervalA, tt2 as any);
       };
     case 2:
-      return setupForTwoIntsToInts<T>(substractGen)(intervalA, intervalB as T | T[]);
+      return setupForTwoIntsToInts<D>(substractGen)(intervalA, intervalB as any);
   }
 }
