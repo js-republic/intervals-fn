@@ -1,10 +1,9 @@
 lib
-tsconfig.json
+tsconfig.*.json
 tslint.json
 typedoc.js
 *.yml
 *.sh
-webpack.config.js
 .prettierrc
 docs
 coverage
