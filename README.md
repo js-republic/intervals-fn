@@ -39,7 +39,7 @@ Functions marked with `*` both accept interval and Array/ReadonlyArray of interv
 ```typescript
 { start: number, end: number };
 
-{ from: number, start: number };
+{ from: number, to: number };
 
 [number, number];
 ```
