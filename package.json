@@ -11,6 +11,7 @@
     "test:codecov": "tslint -p ./ && tsc && nyc npm run ava",
     "build:ts": "tsc -p tsconfig.build.json",
     "build": "npm run build:ts && npm run build:ts -- -m es6 --outDir es",
+    "prepublish": "npm run build",
     "doc": "npm run build && typedoc --out docs/ dist/",
     "semantic-release": "semantic-release",
     "watch:ts": "tsc -w",
