@@ -12,7 +12,6 @@
     "build:ts": "tsc -p tsconfig.build.json",
     "build": "npm run build:ts && npm run build:ts -- -m es6 --outDir es",
     "doc": "npm run build && typedoc --out docs/ dist/",
-    "prepublish": "npm run build",
     "semantic-release": "semantic-release",
     "watch:ts": "tsc -w",
     "watch:ava": "ava -w build/*.test.js",
