@@ -2,6 +2,7 @@ import {
   any,
   aperture,
   applySpec,
+  chain,
   concat,
   converge,
   dissoc,
@@ -85,7 +86,7 @@ const prepareInput = (typeStr: string, i: interval | roai): IntervalSE[] => {
 
 const complementGen = (boundaries: IntervalSE, intervals: IntervalSE[]): IntervalSE[] => {
   const intervalsS = sortByStart(intervals);
-  const { start, end, ...rest} = boundaries;
+  const { start, end, ...rest } = boundaries;
   const prepRanges: IntervalSE[] = [
     { start: -Infinity, end: start },
     ...intervalsS,
@@ -99,7 +100,10 @@ const complementGen = (boundaries: IntervalSE, intervals: IntervalSE[]): Interva
   ) as IntervalSE[];
 };
 
-const complementCurry = <D extends interval, T extends interval>(boundaries: D, intervals: T | T[]): D[] => {
+const complementCurry = <D extends interval, T extends interval>(
+  boundaries: D,
+  intervals: T | T[]
+): D[] => {
   if (Array.isArray(intervals) && intervals.length < 1) {
     return [boundaries] as D[];
   }
@@ -123,9 +127,17 @@ const complementCurry = <D extends interval, T extends interval>(boundaries: D, 
  * @param intervals arg2: one interval or array of intervals that complement the result.
  * @returns array of intervals.
  */
-export function complement<D extends interval, T extends interval>(boundaries: D, interv: T | roat<T>): D[];
-export function complement<D extends interval, T extends interval>(boundaries: D): (interv: T | roat<T>) => D[];
-export function complement<D extends interval, T extends interval>(boundaries: D, interv?: T | roat<T>): any {
+export function complement<D extends interval, T extends interval>(
+  boundaries: D,
+  interv: T | roat<T>
+): D[];
+export function complement<D extends interval, T extends interval>(
+  boundaries: D
+): (interv: T | roat<T>) => D[];
+export function complement<D extends interval, T extends interval>(
+  boundaries: D,
+  interv?: T | roat<T>
+): any {
   switch (arguments.length) {
     case 1:
       return (tt2: T | T[]): D[] => {
@@ -502,9 +514,9 @@ const intersectUnfolderSeed = (
   return [new1, new2];
 };
 
-const intersectUnfolder = (
-  [inters1, inters2]: [IntervalSE[], IntervalSE[]]
-): false | [IntervalSE | null, [IntervalSE[], IntervalSE[]]] => {
+const intersectUnfolder = ([inters1, inters2]: [IntervalSE[], IntervalSE[]]):
+  | false
+  | [IntervalSE | null, [IntervalSE[], IntervalSE[]]] => {
   if (any(isEmpty)([inters1, inters2])) {
     return false;
   }
@@ -656,7 +668,10 @@ const substractGen = (base: IntervalSE[], mask: IntervalSE[]): IntervalSE[] => {
  * @param intervalB arg2: one interval or array of intervals
  * @returns intersection of `arg1` and `arg2`
  */
-export function substract<D extends interval, T extends interval>(intervalA: D | roat<D>, intervalB: T | roat<T>): D[];
+export function substract<D extends interval, T extends interval>(
+  intervalA: D | roat<D>,
+  intervalB: T | roat<T>
+): D[];
 export function substract<D extends interval, T extends interval>(
   intervalA: D | roat<D>
 ): (intervalB: T | roat<T>) => D[];
@@ -671,5 +686,52 @@ export function substract<D extends interval, T extends interval>(
       };
     case 2:
       return setupForTwoIntsToInts<D>(substractGen)(intervalA, intervalB as any);
+  }
+}
+
+const numberToRange = (n: number): IntervalSE => ({ start: n, end: n });
+
+const splitGen = (splits: roat<number>, intervals: IntervalSE[]): IntervalSE[] => {
+  return chain((i => {
+    return chain((int => [
+      { ...int, start: int.start, end: i },
+      { ...int, start: i, end: int.end },
+    ]), intervals.filter(int => isOverlappingSimple(int, numberToRange(i))));
+  }), splits);
+};
+
+const splitCurry = <T extends interval>(splitIndexes: roat<number>, intervals: T | T[]): T[] => {
+  if (Array.isArray(intervals) && intervals.length < 1) {
+    return [];
+  }
+  const typeStr = getType(intervals);
+  const intervalSE = prepareInput(typeStr, intervals);
+  return splitGen(splitIndexes, intervalSE).map(convertTo<T>(typeStr));
+};
+
+/**
+ * Split `intervals` with `splitIndexes`.
+ * Keeps extra object properties on `intervals`.
+ * Curried function. Accept array of intervals. Doesn't mutate input. Output keeps input's structure.
+ *
+ * splitIndexes | interval(s) | result
+ * --- | --- | ---
+ * [2, 4] | { start: 0, end: 6, foo: 'bar' } | [{ start: 0, end: 2, foo: 'bar' }, { start: 2, end: 4, foo: 'bar' } { start: 4, end: 6, foo: 'bar' }]
+ * [5] | [{ start: 0, end: 7 }, { start: 3, end: 8 }] | [{ start: 0, end: 5 }, { start: 5, end: 7 }, { start: 3, end: 5 }, { start: 5, end: 8 }]
+ *
+ * @param splitIndexes arg1: defines indexes where intervals are splitted.
+ * @param intervals arg2: intervals to be splitted.
+ * @returns array of intervals.
+ */
+export function split<T extends interval>(splitIndexes: roat<number>, interv: T | roat<T>): T[];
+export function split<T extends interval>(splitIndexes: roat<number>): (interv: T | roat<T>) => T[];
+export function split<T extends interval>(splitIndexes: roat<number>, interv?: T | roat<T>): any {
+  switch (arguments.length) {
+    case 1:
+      return (tt2: T | T[]): T[] => {
+        return splitCurry<T>(splitIndexes, tt2);
+      };
+    case 2:
+      return splitCurry<T>(splitIndexes, interv as T | T[]);
   }
 }

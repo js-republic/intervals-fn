@@ -22,6 +22,7 @@ All function are curried. Output keeps the input's structure and type. No input 
 ### Manipulations
 * Complement *
 * Merge
+* Split *
 ### Tests ([Allen's interval relations](https://en.wikipedia.org/wiki/Allen%27s_interval_algebra))
 * After
 * Before
@@ -45,10 +46,10 @@ Functions marked with `*` both accept interval and Array/ReadonlyArray of interv
 
 ## Installation
 
-Intervals-fn is distributed on the dev and latest channel:
+Intervals-fn is distributed on the latest channel:
 
 ```bash
-$ npm install intervals-fn@dev --save
+$ npm install intervals-fn --save
 ```
 
 ## Advenced docs

@@ -1,5 +1,4 @@
-import test from 'ava';
-
+import test, { TestContext } from 'ava';
 import { IntervalAR, IntervalFT, IntervalSE } from './data.structures';
 import {
   complement,
@@ -14,6 +13,7 @@ import {
   isStarting,
   merge,
   simplify,
+  split,
   substract,
   unify,
 } from './lib';
@@ -69,6 +69,17 @@ const testFnToIntervals = (
   testOutputFn(prepareOutput(res2, convertFTtoSE));
   testOutputFn(prepareOutput(res3, convertARtoSE));
   t.throws(fn.bind(null, [{ test: 1 }], { test: 1 }), 'Unrecognized interval format');
+};
+
+const testInterval = (t: TestContext, i: IntervalSE, vals: [number, number], extra: object) => {
+  t.is(i.start, vals[0], `test interval: [${i.start}, ${i.end}]`);
+  t.is(i.end, vals[1], `test interval: ${i}`);
+  Object.entries(extra).forEach(([key, val]) => {
+    t.true(
+      i.hasOwnProperty(key) && Reflect.get(i, key) === val,
+      `test interval: ${i}, with prop: ${key}:${val}`
+    );
+  });
 };
 
 interface IWithData {
@@ -460,4 +471,23 @@ test('will trash empty interval', t => {
   t.is(res[0].start, 8);
   t.is(res[0].end, 9);
   t.is(res[0].test, 'bar');
+});
+
+test('will split empty interval', t => {
+  const r1: IntervalSE[] = [];
+  const r2 = [5];
+  const res = split(r2)(r1);
+  t.is(res.length, 0);
+});
+
+
+test('will split intervals', t => {
+  const r1 = [{ start: 0, end: 7, test: 'foo' }, { start: 3, end: 8, test: 'bar' }];
+  const r2 = [5];
+  const res = split(r2, r1);
+  t.is(res.length, 4);
+  testInterval(t, res[0], [0, 5], { test: 'foo' });
+  testInterval(t, res[1], [5, 7], { test: 'foo' });
+  testInterval(t, res[2], [3, 5], { test: 'bar' });
+  testInterval(t, res[3], [5, 8], { test: 'bar' });
 });
