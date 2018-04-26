@@ -71,9 +71,12 @@ const testFnToIntervals = (
   t.throws(fn.bind(null, [{ test: 1 }], { test: 1 }), 'Unrecognized interval format');
 };
 
-const testInterval = (t: TestContext, i: IntervalSE, vals: [number, number], extra: object) => {
+const testInterval = (t: TestContext, i: IntervalSE, vals: [number, number], extra?: object) => {
   t.is(i.start, vals[0], `test interval: [${i.start}, ${i.end}]`);
   t.is(i.end, vals[1], `test interval: ${i}`);
+  if (!extra) {
+    return;
+  }
   Object.entries(extra).forEach(([key, val]) => {
     t.true(
       i.hasOwnProperty(key) && Reflect.get(i, key) === val,
@@ -481,13 +484,20 @@ test('will split empty interval', t => {
 });
 
 
-test('will split intervals', t => {
-  const r1 = [{ start: 0, end: 7, test: 'foo' }, { start: 3, end: 8, test: 'bar' }];
-  const r2 = [5];
+test('will not split when no indexes', t => {
+  const r1 = [{ start: 0, end: 7, test: 'foo' }];
+  const r2: number[] = [];
   const res = split(r2, r1);
-  t.is(res.length, 4);
-  testInterval(t, res[0], [0, 5], { test: 'foo' });
-  testInterval(t, res[1], [5, 7], { test: 'foo' });
-  testInterval(t, res[2], [3, 5], { test: 'bar' });
-  testInterval(t, res[3], [5, 8], { test: 'bar' });
+  t.is(res.length, 1);
+  testInterval(t, res[0], [0, 7], { test: 'foo' });
+});
+
+test('will not split when no intersection', t => {
+  const r1 = [{ start: 0, end: 7, test: 'foo' }, { start: 8, end: 10 }];
+  const r2 = [9];
+  const res = split(r2, r1);
+  t.is(res.length, 3);
+  testInterval(t, res[0], [0, 7], { test: 'foo' });
+  testInterval(t, res[1], [8, 9]);
+  testInterval(t, res[2], [9, 10]);
 });

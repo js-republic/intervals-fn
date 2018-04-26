@@ -693,19 +693,19 @@ const numberToRange = (n: number): IntervalSE => ({ start: n, end: n });
 
 const splitGen = (splits: roat<number>, intervals: IntervalSE[]): IntervalSE[] => {
   return chain((i => {
-    return chain((int => [
+    return chain((int => isOverlappingSimple(int, numberToRange(i)) ? [
       { ...int, start: int.start, end: i },
       { ...int, start: i, end: int.end },
-    ]), intervals.filter(int => isOverlappingSimple(int, numberToRange(i))));
+    ] : [int]), intervals);
   }), splits);
 };
 
 const splitCurry = <T extends interval>(splitIndexes: roat<number>, intervals: T | T[]): T[] => {
-  if (Array.isArray(intervals) && intervals.length < 1) {
-    return [];
-  }
   const typeStr = getType(intervals);
   const intervalSE = prepareInput(typeStr, intervals);
+  if (splitIndexes.length < 1 || Array.isArray(intervals) && intervals.length < 1) {
+    return intervalSE.map(convertTo<T>(typeStr));
+  }
   return splitGen(splitIndexes, intervalSE).map(convertTo<T>(typeStr));
 };
 
