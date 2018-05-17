@@ -692,6 +692,11 @@ export function substract<D extends interval, T extends interval>(
 const numberToRange = (n: number): IntervalSE => ({ start: n, end: n });
 
 const splitGen = (splits: roat<number>, intervals: IntervalSE[]): IntervalSE[] => {
+  intervals.map(interval => {
+    splits.map(i => {
+      isOverlapping
+    })
+  });
   return chain((i => {
     return chain((int => isOverlappingSimple(int, numberToRange(i)) ? [
       { ...int, start: int.start, end: i },
@@ -706,7 +711,7 @@ const splitCurry = <T extends interval>(splitIndexes: roat<number>, intervals: T
   if (splitIndexes.length < 1 || Array.isArray(intervals) && intervals.length < 1) {
     return intervalSE.map(convertTo<T>(typeStr));
   }
-  return splitGen(splitIndexes, intervalSE).map(convertTo<T>(typeStr));
+  return splitGen([...splitIndexes].sort(), intervalSE).map(convertTo<T>(typeStr));
 };
 
 /**
