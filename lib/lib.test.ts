@@ -460,7 +460,6 @@ test('intersection will not simplify when two intervals are touching', t => {
   testFnToIntervals(r2, r1, intersect, testOutputFn, t);
 });
 
-
 test('intersection will keep object properties', t => {
   const r1 = [{ start: 1, end: 5, test: 'foo' }];
   const r2 = [{ start: 1, end: 2, test: 'bar' }, { start: 2, end: 5, test: 'baz' }];
@@ -496,7 +495,6 @@ test('will split empty interval', t => {
   t.is(res.length, 0);
 });
 
-
 test('will not split when no indexes', t => {
   const r1 = [{ start: 0, end: 7, test: 'foo' }];
   const r2: number[] = [];
@@ -506,11 +504,11 @@ test('will not split when no indexes', t => {
 });
 
 test('will not split when no intersection', t => {
-  const r1 = [{ start: 0, end: 7, test: 'foo' }, { start: 8, end: 10 }];
+  const r1 = [{ start: 0, end: 7, test: 'foo' }, { start: 8, end: 10, test: 'bar' }];
   const r2 = [9];
   const res = split(r2, r1);
   t.is(res.length, 3);
   testInterval(t, res[0], [0, 7], { test: 'foo' });
-  testInterval(t, res[1], [8, 9]);
-  testInterval(t, res[2], [9, 10]);
+  testInterval(t, res[1], [8, 9], { test: 'bar' });
+  testInterval(t, res[2], [9, 10], { test: 'bar' });
 });
