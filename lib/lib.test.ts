@@ -519,6 +519,6 @@ test('will split with multiple indexes', t => {
   const res = split(r2, r1);
   t.is(res.length, 3);
   testInterval(t, res[0], [0, 2], { test: 'foo' });
-  testInterval(t, res[1], [2, 8], { test: 'bar' });
-  testInterval(t, res[2], [8, 10], { test: 'bar' });
+  testInterval(t, res[1], [2, 8], { test: 'foo' });
+  testInterval(t, res[2], [8, 10], { test: 'foo' });
 });

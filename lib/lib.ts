@@ -2,7 +2,6 @@ import {
   any,
   aperture,
   applySpec,
-  chain,
   concat,
   converge,
   dissoc,
@@ -201,6 +200,10 @@ const setupForTwoIntsToBool = (fn: twoIntsToBoolFn) => (
 
 const isOverlappingSimple = (a: IntervalSE, b: IntervalSE): boolean => {
   return b.start < a.end && b.end > a.start;
+};
+
+const isOverlappingNum = (a: IntervalSE, b: number): boolean => {
+  return a.start < b && b < a.end;
 };
 
 const beforeOrAdjTo = (afterInt: IntervalSE) => (beforeInt: IntervalSE) =>
@@ -689,26 +692,36 @@ export function substract<D extends interval, T extends interval>(
   }
 }
 
-const numberToRange = (n: number): IntervalSE => ({ start: n, end: n });
+const splitIntervalWithIndex = (int: IntervalSE, index: number): IntervalSE[] => {
+  if (!isOverlappingNum(int, index)) {
+    return [int];
+  }
+  return [{ ...int, start: int.start, end: index }, { ...int, start: index, end: int.end }];
+};
 
+/**
+ *  ||  |  |     |
+ * [  ]  [  ][     ]
+ *
+ */
 const splitGen = (splits: roat<number>, intervals: IntervalSE[]): IntervalSE[] => {
-  intervals.map(interval => {
-    splits.map(i => {
-      isOverlapping
-    })
-  });
-  return chain((i => {
-    return chain((int => isOverlappingSimple(int, numberToRange(i)) ? [
-      { ...int, start: int.start, end: i },
-      { ...int, start: i, end: int.end },
-    ] : [int]), intervals);
-  }), splits);
+  return unnest(
+    intervals.map(int =>
+      splits.reduce(
+        (acc: IntervalSE[], i: number) => {
+          const lastInt = acc.pop() as IntervalSE;
+          return [...acc, ...splitIntervalWithIndex(lastInt, i)];
+        },
+        [int]
+      )
+    )
+  );
 };
 
 const splitCurry = <T extends interval>(splitIndexes: roat<number>, intervals: T | T[]): T[] => {
   const typeStr = getType(intervals);
   const intervalSE = prepareInput(typeStr, intervals);
-  if (splitIndexes.length < 1 || Array.isArray(intervals) && intervals.length < 1) {
+  if (splitIndexes.length < 1 || (Array.isArray(intervals) && intervals.length < 1)) {
     return intervalSE.map(convertTo<T>(typeStr));
   }
   return splitGen([...splitIndexes].sort(), intervalSE).map(convertTo<T>(typeStr));
