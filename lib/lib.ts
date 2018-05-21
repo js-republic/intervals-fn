@@ -718,13 +718,15 @@ const splitGen = (splits: roat<number>, intervals: IntervalSE[]): IntervalSE[] =
   );
 };
 
+const sortNumbers = (arr: roat<number>): number[] => [...arr].sort((a, b) => a - b);
+
 const splitCurry = <T extends interval>(splitIndexes: roat<number>, intervals: T | T[]): T[] => {
   const typeStr = getType(intervals);
   const intervalSE = prepareInput(typeStr, intervals);
   if (splitIndexes.length < 1 || (Array.isArray(intervals) && intervals.length < 1)) {
     return intervalSE.map(convertTo<T>(typeStr));
   }
-  return splitGen([...splitIndexes].sort(), intervalSE).map(convertTo<T>(typeStr));
+  return splitGen(sortNumbers(splitIndexes), intervalSE).map(convertTo<T>(typeStr));
 };
 
 /**

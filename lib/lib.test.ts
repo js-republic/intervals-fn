@@ -514,11 +514,11 @@ test('will not split when no intersection', t => {
 });
 
 test('will split with multiple indexes', t => {
-  const r1 = [{ start: 0, end: 10, test: 'foo' }];
-  const r2 = [2, 8];
+  const r1 = [{ start: 0, end: 15, test: 'foo' }];
+  const r2 = [5, 11];
   const res = split(r2, r1);
   t.is(res.length, 3);
-  testInterval(t, res[0], [0, 2], { test: 'foo' });
-  testInterval(t, res[1], [2, 8], { test: 'foo' });
-  testInterval(t, res[2], [8, 10], { test: 'foo' });
+  testInterval(t, res[0], [0, 5], { test: 'foo' });
+  testInterval(t, res[1], [5, 11], { test: 'foo' });
+  testInterval(t, res[2], [11, 15], { test: 'foo' });
 });
