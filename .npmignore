@@ -1,4 +1,4 @@
-lib
+src
 tsconfig.*.json
 tslint.json
 typedoc.js
@@ -10,4 +10,4 @@ coverage
 cc-test-reporter
 .nyc_output
 build
-dist/build
+lib/build

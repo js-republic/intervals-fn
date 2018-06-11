@@ -1,5 +1,5 @@
 import test, { TestContext } from 'ava';
-import { IntervalAR, IntervalFT, IntervalSE } from './data.structures';
+import { IntervalAR, IntervalFT, IntervalSE } from '../src/data.structures';
 import {
   complement,
   intersect,
@@ -16,7 +16,7 @@ import {
   split,
   substract,
   unify,
-} from './lib';
+} from '../src/lib';
 
 const prepareInput = (i1: IntervalSE | IntervalSE[], convertFn: (i: IntervalSE) => any) => {
   if (Array.isArray(i1)) {

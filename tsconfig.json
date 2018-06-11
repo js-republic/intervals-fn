@@ -6,7 +6,8 @@
     "sourceMap": true
   },
   "include": [
-    "lib/*"
+    "src/*",
+    "test/*"
   ],
   "exclude": [
     "node_modules"
