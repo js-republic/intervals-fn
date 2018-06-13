@@ -1,5 +1,5 @@
 src
-tsconfig.*.json
+tsconfig*.json
 tslint.json
 typedoc.js
 *.yml
@@ -11,3 +11,4 @@ cc-test-reporter
 .nyc_output
 build
 lib/build
+test
