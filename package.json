@@ -40,7 +40,9 @@
     "url": "https://github.com/js-republic/intervals-fn/issues"
   },
   "homepage": "https://github.com/js-republic/intervals-fn#readme",
-  "dependencies": {},
+  "dependencies": {
+    "ramda": "^0.25.0"
+  },
   "sideEffects": false,
   "devDependencies": {
     "@semantic-release/release-notes-generator": "^6.0.3",
@@ -50,12 +52,11 @@
     "cz-conventional-changelog": "^2.1.0",
     "nyc": "^11.7.0",
     "prettier": "^1.12.1",
-    "ramda": "^0.25.0",
     "semantic-release": "^11.0.2",
     "tslint": "^5.9.1",
     "tslint-config-prettier": "^1.12.0",
     "typedoc": "^0.11.1",
-    "typescript": "^2.8.3"
+    "typescript": "~2.8.0"
   },
   "config": {
     "commitizen": {
