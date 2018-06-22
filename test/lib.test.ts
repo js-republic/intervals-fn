@@ -1,7 +1,11 @@
 import test, { TestContext } from 'ava';
-import { IntervalAR, IntervalFT, IntervalSE } from '../src/data.structures';
+import { IntervalFT, IntervalSE } from '../src/data.structures';
 import {
   complement,
+  convertARtoSE,
+  convertFTtoSE,
+  convertSEtoAR,
+  convertSEtoFT,
   intersect,
   isAfter,
   isBefore,
@@ -18,43 +22,13 @@ import {
   unify,
 } from '../src/lib';
 
-const prepareInput = (i1: IntervalSE | IntervalSE[], convertFn: (i: IntervalSE) => any) => {
-  if (Array.isArray(i1)) {
-    return i1.map(convertFn);
-  }
-  return convertFn(i1);
-};
-
-const prepareOutput = (i1: IntervalSE[], convertFn: (i: any) => any) => {
-  return i1.map(convertFn);
-};
-
-const convertFTtoSE = (r: IntervalFT): IntervalSE => ({ start: r.from, end: r.to });
-const convertARtoSE = ([start, end]: IntervalAR): IntervalSE => ({ start, end });
-const convertSEtoFT = (r: IntervalSE): IntervalFT => ({ from: r.start, to: r.end });
-const convertSEtoAR = (r: IntervalSE): IntervalAR => [r.start, r.end];
-
-const testFnInputs = (
-  i1: IntervalSE | IntervalSE[],
-  i2: IntervalSE | IntervalSE[],
-  fn: (...n: any[]) => any
-) => {
-  const res = fn(i1)(i2);
-  const res2 = fn(prepareInput(i1, convertSEtoFT), prepareInput(i2, convertSEtoFT));
-  const res3 = fn(prepareInput(i1, convertSEtoAR), prepareInput(i2, convertSEtoAR));
-  return [res, res2, res3];
-};
-
 const testFnToBoolean = (
   i1: IntervalSE | IntervalSE[],
   i2: IntervalSE | IntervalSE[],
   fn: (...n: any[]) => any,
   testOutputFn: (n: any) => void
 ): void => {
-  const [res, res2, res3] = testFnInputs(i1, i2, fn);
-  testOutputFn(res);
-  testOutputFn(res2);
-  testOutputFn(res3);
+  testOutputFn(fn(i1, i2));
 };
 
 const testFnToIntervals = (
@@ -62,13 +36,9 @@ const testFnToIntervals = (
   i2: IntervalSE | IntervalSE[],
   fn: (...n: any[]) => any,
   testOutputFn: (n: any) => void,
-  t: any
+  _: any
 ): void => {
-  const [res, res2, res3] = testFnInputs(i1, i2, fn);
-  testOutputFn(res);
-  testOutputFn(prepareOutput(res2, convertFTtoSE));
-  testOutputFn(prepareOutput(res3, convertARtoSE));
-  t.throws(fn.bind(null, [{ test: 1 }], { test: 1 }), 'Unrecognized interval format');
+  testOutputFn(fn(i1, i2));
 };
 
 const testInterval = (t: TestContext, i: IntervalSE, vals: [number, number], extra?: object) => {
@@ -117,7 +87,7 @@ test('will merge arrays of ranges', t => {
 test('will merge arrays of FT ranges', t => {
   const i1 = [{ from: 0, to: 10, data: 5 }, { from: 4, to: 7, data: 10 }];
   const mergeFn = (ranges: FTwithData[]) => ranges.reduce(reduceWithData);
-  const merged = merge(mergeFn)(i1);
+  const merged = merge(mergeFn, i1.map(convertFTtoSE)).map(convertSEtoFT);
 
   const testOutputFn = (res: FTwithData[]): void => {
     t.is(res.length, 3);
@@ -132,7 +102,7 @@ test('will simplify', t => {
   const i1 = [{ start: 0, end: 2 }, { start: 2, end: 10 }];
   const i2 = [[0, 8], [2, 10]] as Array<[number, number]>;
   const res1 = simplify(i1);
-  const res2 = simplify(i2);
+  const res2 = simplify(i2.map(convertARtoSE)).map(convertSEtoAR);
   t.true(res1.length === 1 && res1[0].start === 0 && res1[0].end === 10);
   t.true(res2.length === 1 && res2[0][0] === 0 && res2[0][1] === 10);
 });
@@ -349,8 +319,8 @@ test('will unify two arrays', t => {
 });
 
 test('will unify included range', t => {
-  const i1 = { start: 0, end: 10 };
-  const i2 = { start: 4, end: 8 };
+  const i1 = [{ start: 0, end: 10 }];
+  const i2 = [{ start: 4, end: 8 }];
   const testOutputFn = (res: IntervalSE[]): void => {
     t.true(res.length === 1);
     t.true(res[0].start === 0 && res[0].end === 10);
@@ -370,7 +340,7 @@ test('unify will simplify arrays', t => {
 
 test('will intersect an array with an interval', t => {
   const r1 = [{ start: 0, end: 5 }, { start: 7, end: 9 }, { start: 11, end: 15 }];
-  const r2 = { start: 3, end: 8 };
+  const r2 = [{ start: 3, end: 8 }];
   const testOutputFn = (res: IntervalSE[]): void => {
     t.true(res[0].start === 3 && res[0].end === 5);
     t.true(res[1].start === 7 && res[1].end === 8);
@@ -406,7 +376,7 @@ test('will intersect two arrays', t => {
 });
 
 test('will intersect correctly if one interval from arg1 intersects many from arg2', t => {
-  const i1 = { start: 3, end: 7 };
+  const i1 = [{ start: 3, end: 7 }];
   const i2 = [{ start: 0, end: 5 }, { start: 6, end: 8 }];
   const testOutputFn = (res: IntervalSE[]): void => {
     t.true(res.length === 2);
@@ -417,21 +387,11 @@ test('will intersect correctly if one interval from arg1 intersects many from ar
 });
 
 test('will intersect two intervals', t => {
-  const r1 = { start: 0, end: 5 };
-  const r2 = { start: 3, end: 6 };
+  const r1 = [{ start: 0, end: 5 }];
+  const r2 = [{ start: 3, end: 6 }];
   const testOutputFn = (res: IntervalSE[]): void => {
     t.true(res.length === 1);
     t.true(res[0].start === 3 && res[0].end === 5);
-  };
-  testFnToIntervals(r1, r2, intersect, testOutputFn, t);
-});
-
-test('will intersect an interval and an array', t => {
-  const r1 = { start: 0, end: 5 };
-  const r2 = [{ start: 1, end: 2 }, { start: 5, end: 10 }];
-  const testOutputFn = (res: IntervalSE[]): void => {
-    t.true(res.length === 1);
-    t.true(res[0].start === 1 && res[0].end === 2);
   };
   testFnToIntervals(r1, r2, intersect, testOutputFn, t);
 });
@@ -480,7 +440,7 @@ test('intersection will keep object properties when truncated', t => {
 
 test('will trash empty interval', t => {
   const r1 = [{ start: 0, end: 5, test: 'foo' }, { start: 8, end: 10, test: 'bar' }];
-  const r2 = { start: 6, end: 9 };
+  const r2 = [{ start: 6, end: 9 }];
   const res = intersect(r2, r1);
   t.is(res.length, 1);
   t.is(res[0].start, 8);
@@ -491,7 +451,7 @@ test('will trash empty interval', t => {
 test('will split empty interval', t => {
   const r1: IntervalSE[] = [];
   const r2 = [5];
-  const res = split(r2)(r1);
+  const res = split(r2, r1);
   t.is(res.length, 0);
 });
 

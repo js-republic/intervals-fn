@@ -1,6 +1,4 @@
-export type interval = IntervalSE | IntervalFT | IntervalAR;
 export type roat<T> = ReadonlyArray<T>;
-export type roai = ReadonlyArray<interval>;
 
 export interface IntervalSE {
   start: number;
