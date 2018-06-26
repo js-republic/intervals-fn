@@ -27,16 +27,14 @@ const dissocMany = (...props: string[]) => {
   return pipe.apply(null, props.map(p => dissoc(p))); // Workaround for TS issue #4130
 };
 
-type Diff<T extends string, U extends string> = ({ [P in T]: P } &
-  { [P in U]: never } & { [x: string]: never })[T];
-type Minus<T, U> = { [P in Diff<keyof T, keyof U>]: T[P] };
+type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 // tslint:disable:prefer-object-spread
-export const convertFTtoSE = <T extends IntervalFT>(r: T): Minus<T, IntervalFT> & IntervalSE =>
+export const convertFTtoSE = <T extends IntervalFT>(r: T): Omit<T, 'from' | 'to'> & IntervalSE =>
   dissocMany('from', 'to')(Object.assign({}, r, { start: r.from, end: r.to }));
 
 export const convertARtoSE = ([start, end]: IntervalAR): IntervalSE => ({ start, end });
 
-export const convertSEtoFT = <T extends IntervalSE>(r: T): Minus<T, IntervalSE> & IntervalFT =>
+export const convertSEtoFT = <T extends IntervalSE>(r: T): Omit<T, 'start' | 'end'> & IntervalFT =>
   dissocMany('start', 'end')(Object.assign({}, r, { from: r.start, to: r.end }));
 
 export const convertSEtoAR = (r: IntervalSE): IntervalAR => [r.start, r.end];
@@ -242,7 +240,11 @@ export const isEqual = (a: IntervalSE, b: IntervalSE): boolean => {
   return a.start === b.start && a.end === b.end;
 };
 
-const propFromNthArg = (n: number, propName: string) => pipe(nthArg(n), prop(propName));
+const propFromNthArg = (n: number, propName: string) =>
+  pipe(
+    nthArg(n),
+    prop(propName)
+  );
 const maxEnd = (ranges: IntervalSE[]) => ranges.reduce((a, b) => (a.end > b.end ? a : b));
 
 const simplifyPipe = pipe(
