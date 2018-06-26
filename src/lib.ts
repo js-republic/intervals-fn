@@ -1,6 +1,27 @@
-import { any, aperture, applySpec, concat, converge, dissoc, drop, dropWhile, either, groupWith, head, isEmpty, isNil, map, nthArg, pipe, prop, reject, sortBy, unfold, unnest } from 'ramda';
+import {
+  any,
+  aperture,
+  applySpec,
+  concat,
+  converge,
+  dissoc,
+  drop,
+  dropWhile,
+  either,
+  groupWith,
+  head,
+  isEmpty,
+  isNil,
+  map,
+  nthArg,
+  pipe,
+  prop,
+  reject,
+  sortBy,
+  unfold,
+  unnest,
+} from 'ramda';
 import { IntervalAR, IntervalFT, IntervalSE, roat } from './data.structures';
-
 
 const dissocMany = (...props: string[]) => {
   return pipe.apply(null, props.map(p => dissoc(p))); // Workaround for TS issue #4130
@@ -35,7 +56,10 @@ export const convertSEtoAR = (r: IntervalSE): IntervalAR => [r.start, r.end];
  * @param intervals arg2: array of intervals that complement the result.
  * @returns array of intervals.
  */
-export const complement = <T extends IntervalSE>(boundaries: T, intervals: IntervalSE[]): T[] => {
+export const complement = <T extends IntervalSE>(
+  boundaries: T,
+  intervals: roat<IntervalSE>
+): T[] => {
   const { start, end, ...rest }: IntervalSE = boundaries as any; // See TypeScript/pull/13288 TypeScript/issues/10727
   const prepRanges: IntervalSE[] = [
     { start: -Infinity, end: start },
@@ -89,7 +113,10 @@ const beforeOrAdjTo = (afterInt: IntervalSE) => (beforeInt: IntervalSE) =>
  * @param intervalB arg2: interval or array of intervals
  * @returns true if overlaps
  */
-export const isOverlapping = (intervalsA: IntervalSE[], intervalsB: IntervalSE[]): boolean => {
+export const isOverlapping = (
+  intervalsA: roat<IntervalSE>,
+  intervalsB: roat<IntervalSE>
+): boolean => {
   if ([intervalsA, intervalsB].some(isEmpty)) {
     return false;
   }
@@ -215,11 +242,7 @@ export const isEqual = (a: IntervalSE, b: IntervalSE): boolean => {
   return a.start === b.start && a.end === b.end;
 };
 
-const propFromNthArg = (n: number, propName: string) =>
-  pipe(
-    nthArg(n),
-    prop(propName)
-  );
+const propFromNthArg = (n: number, propName: string) => pipe(nthArg(n), prop(propName));
 const maxEnd = (ranges: IntervalSE[]) => ranges.reduce((a, b) => (a.end > b.end ? a : b));
 
 const simplifyPipe = pipe(
@@ -282,7 +305,7 @@ const intersectUnfolderSeed = (
   return [new1, new2];
 };
 
-const intersectUnfolder = ([inters1, inters2]: [IntervalSE[], IntervalSE[]]):
+const intersectUnfolder = ([inters1, inters2]: [roat<IntervalSE>, roat<IntervalSE>]):
   | false
   | [IntervalSE | null, [IntervalSE[], IntervalSE[]]] => {
   if (any(isEmpty)([inters1, inters2])) {
@@ -325,17 +348,21 @@ const intersectUnfolder = ([inters1, inters2]: [IntervalSE[], IntervalSE[]]):
  * @param intervalB arg2: array of intervals
  * @returns intersection of `arg1` and `arg2`
  */
-export const intersect = <T extends IntervalSE>(intervalsA: IntervalSE[], intervalsB: T[]): T[] => {
-  return unfold(intersectUnfolder, [intervalsA, intervalsB] as [IntervalSE[], IntervalSE[]]).filter(
-    i => i != null
-  ) as T[];
+export const intersect = <T extends IntervalSE>(
+  intervalsA: roat<IntervalSE>,
+  intervalsB: roat<T>
+): T[] => {
+  return unfold(intersectUnfolder, [intervalsA, intervalsB] as [
+    roat<IntervalSE>,
+    roat<IntervalSE>
+  ]).filter(i => i != null) as T[];
 };
 
-const minStart = (ranges: IntervalSE[]) => ranges.reduce((a, b) => (a.start < b.start ? a : b));
+const minStart = (ranges: roat<IntervalSE>) => ranges.reduce((a, b) => (a.start < b.start ? a : b));
 
 const mergeUnfolder = (mergeFn: (ints: any[]) => any) => (
-  ints: IntervalSE[]
-): false | [any, IntervalSE[]] => {
+  ints: roat<IntervalSE>
+): false | [any, roat<IntervalSE>] => {
   if (!ints.length) {
     return false;
   }
@@ -367,7 +394,10 @@ const mergeUnfolder = (mergeFn: (ints: any[]) => any) => (
  * @param mergeFn arg1: function to merge extra properties of overlapping intervals
  * @param intervals arg2: intervals with extra properties.
  */
-export const merge = <T extends IntervalSE>(mergeFn: (ints: any[]) => any, intervals: T[]): T[] => {
+export const merge = <T extends IntervalSE>(
+  mergeFn: (ints: any[]) => any,
+  intervals: roat<T>
+): T[] => {
   return unfold(mergeUnfolder(mergeFn), intervals) as T[];
 };
 
@@ -391,7 +421,7 @@ const subtractInter = (mask: IntervalSE[], base: IntervalSE): IntervalSE[] => {
  * @param intervalB arg2: array of intervals
  * @returns intersection of `arg1` and `arg2`
  */
-export const substract = <T extends IntervalSE>(base: T[], mask: IntervalSE[]): T[] => {
+export const substract = <T extends IntervalSE>(base: roat<T>, mask: roat<IntervalSE>): T[] => {
   const intersection = intersect(mask, base);
   return unnest(
     base.map(b => subtractInter(intersection.filter(isOverlappingSimple.bind(null, b)), b))
@@ -404,7 +434,6 @@ const splitIntervalWithIndex = (int: IntervalSE, index: number): IntervalSE[] =>
   }
   return [{ ...int, start: int.start, end: index }, { ...int, start: index, end: int.end }];
 };
-
 
 /**
  * Split `intervals` with `splitIndexes`.
@@ -420,9 +449,9 @@ const splitIntervalWithIndex = (int: IntervalSE, index: number): IntervalSE[] =>
  * @param intervals arg2: intervals to be splitted.
  * @returns array of intervals.
  */
-export const split = <T extends IntervalSE>(splits: roat<number>, intervals: T[]): T[] => {
+export const split = <T extends IntervalSE>(splits: roat<number>, intervals: roat<T>): T[] => {
   if (splits.length < 1 || intervals.length < 1) {
-    return intervals;
+    return intervals as T[];
   }
   return unnest(
     intervals.map(int =>

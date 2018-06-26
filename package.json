@@ -15,7 +15,7 @@
     "doc": "npm run build && typedoc --out docs/ lib/",
     "semantic-release": "semantic-release",
     "watch:ts": "tsc -w",
-    "watch:ava": "ava -w build/*.test.js",
+    "watch:ava": "ava -w build/**/*.test.js",
     "watch:test": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Ava\" -c \"blue.bold,magenta.bold\" \"npm run watch:ts\" \"npm run watch:ava\""
   },
   "repository": {
