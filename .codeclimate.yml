@@ -7,8 +7,8 @@ plugins:
         javascript:
           mass_threshold: 65
   tslint:
-    enabled: false
-    channel: beta
+    enabled: true
+    config: tslint.json
 exclude_patterns:
 - '**/*.test.ts'
 - 'dist/'
