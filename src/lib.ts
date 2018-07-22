@@ -4,7 +4,6 @@ import {
   applySpec,
   concat,
   converge,
-  dissoc,
   drop,
   dropWhile,
   either,
@@ -14,7 +13,6 @@ import {
   isNil,
   map,
   nthArg,
-  pipe,
   prop,
   reject,
   sortBy,
@@ -22,22 +20,28 @@ import {
   unnest,
 } from 'ramda';
 import { IntervalAR, IntervalFT, IntervalSE, roat } from './data.structures';
+import { curry, dissoc, pipe } from './first-order';
 
-const dissocMany = (...props: string[]) => {
-  return pipe.apply(null, props.map(p => dissoc(p))); // Workaround for TS issue #4130
+const dissocMany = <T>(...props: Array<keyof T>) => {
+  return pipe(...props.map(p => curry(dissoc)(p)));
 };
 
-type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
+type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 // tslint:disable:prefer-object-spread
-export const convertFTtoSE = <T extends IntervalFT>(r: T): Omit<T, 'from' | 'to'> & IntervalSE =>
-  dissocMany('from', 'to')(Object.assign({}, r, { start: r.from, end: r.to }));
+
+export const convertFTtoSE = <T extends IntervalFT>(r: T): Omit<T, 'from' | 'to'> & IntervalSE =>
+  dissocMany<T>('from', 'to')(Object.assign({}, r, { start: r.from, end: r.to }));
 
 export const convertARtoSE = ([start, end]: IntervalAR): IntervalSE => ({ start, end });
 
-export const convertSEtoFT = <T extends IntervalSE>(r: T): Omit<T, 'start' | 'end'> & IntervalFT =>
+export const convertSEtoFT = <T extends IntervalSE>(r: T): Omit<T, 'start' | 'end'> & IntervalFT =>
   dissocMany('start', 'end')(Object.assign({}, r, { from: r.start, to: r.end }));
 
 export const convertSEtoAR = (r: IntervalSE): IntervalAR => [r.start, r.end];
+
+const mapp = (fn, list) => {
+  return list.map(fn);
+};
 
 /**
  * Complement of `intervals` bounded to `boundaries`. Convert space between two consecutive intervals into interval.
@@ -64,12 +68,13 @@ export const complement = <T extends IntervalSE>(
     ...intervals,
     { start: end, end: Infinity },
   ];
-  return reject<IntervalSE | null>(
-    isNil,
-    aperture(2, prepRanges).map(
+  return pipe(
+    aperture(2),
+    curry(mapp)(
       ([r1, r2]) => (r1.end >= r2.start ? null : { start: r1.end, end: r2.start, ...rest })
-    )
-  ) as T[];
+    ),
+    reject(isNil)
+  )(prepRanges);
 };
 
 /**
@@ -240,11 +245,7 @@ export const isEqual = (a: IntervalSE, b: IntervalSE): boolean => {
   return a.start === b.start && a.end === b.end;
 };
 
-const propFromNthArg = (n: number, propName: string) =>
-  pipe(
-    nthArg(n),
-    prop(propName)
-  );
+const propFromNthArg = (n: number, propName: string) => pipe(nthArg(n), prop(propName));
 const maxEnd = (ranges: IntervalSE[]) => ranges.reduce((a, b) => (a.end > b.end ? a : b));
 
 const simplifyPipe = pipe(
@@ -307,9 +308,9 @@ const intersectUnfolderSeed = (
   return [new1, new2];
 };
 
-const intersectUnfolder = ([inters1, inters2]: [roat<IntervalSE>, roat<IntervalSE>]):
-  | false
-  | [IntervalSE | null, [IntervalSE[], IntervalSE[]]] => {
+const intersectUnfolder = (
+  [inters1, inters2]: [roat<IntervalSE>, roat<IntervalSE>]
+): false | [IntervalSE | null, [IntervalSE[], IntervalSE[]]] => {
   if (any(isEmpty)([inters1, inters2])) {
     return false;
   }
